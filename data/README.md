@@ -1,0 +1,4 @@
+Files with **.dat** extensions are the transactional datasets : each line of the file represents a transaction.
+Files with **.val** extensions are the value files : each line of the file represents the value of an item (the first line is the value of the first item, the second one the value of the second item, etc...).
+The file **eisen.names** contains the name of each items (the first line represents the name of the first item, the second one the name of the second item, etc...).
+The original **Eisen** dataset is available [here](https://www.i3s.unice.fr/~pasquier/web/?Research_Activities___Dataset_Downloads___Eisen_et_al._Yeast).
