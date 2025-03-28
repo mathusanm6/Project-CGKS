@@ -5,12 +5,8 @@ package com.github.cgks;
 import io.gitlab.chaver.mining.patterns.constraints.factory.ConstraintFactory;
 import io.gitlab.chaver.mining.patterns.io.DatReader;
 import io.gitlab.chaver.mining.patterns.io.TransactionalDatabase;
-import io.gitlab.chaver.mining.patterns.io.Pattern;
-import io.gitlab.chaver.mining.patterns.search.strategy.selectors.variables.MinCov;
 import org.chocosolver.solver.Model;
 import org.chocosolver.solver.Solver;
-import org.chocosolver.solver.search.strategy.Search;
-import org.chocosolver.solver.search.strategy.selectors.values.IntDomainMin;
 import org.chocosolver.solver.variables.BoolVar;
 import org.chocosolver.solver.variables.IntVar;
 
@@ -18,7 +14,7 @@ import java.util.Arrays;
 import java.util.stream.IntStream;
 
 
-public class Questions_mars{
+public class ChocoMiningQuestions{
 
     public static void printPattern(TransactionalDatabase database, BoolVar[] x, IntVar freq){
         int[] itemset = IntStream.range(0, x.length).filter(i -> x[i].getValue() == 1)
@@ -43,7 +39,7 @@ public class Questions_mars{
         Solver solver_1 = model_1.getSolver();
         System.out.println("Liste des motifs ensemblistes fréquents for the dataset contextPasquier99:");
         while (solver_1.solve()) {
-            Questions_mars.printPattern(database, x_1, freq_1);
+            ChocoMiningQuestions.printPattern(database, x_1, freq_1);
         }
         //Q2 : Motifs fermés
         Model model_2 = new Model("Closed Itemset Mining");
@@ -56,7 +52,7 @@ public class Questions_mars{
         Solver solver_2 = model_2.getSolver();
         System.out.println("Liste des motifs fermés for the dataset contextPasquier99:");
         while (solver_2.solve()) {
-            Questions_mars.printPattern(database, x_2, freq_2);
+            ChocoMiningQuestions.printPattern(database, x_2, freq_2);
         }
 
         //Q3 : Motifs maximaux
@@ -69,7 +65,7 @@ public class Questions_mars{
         Solver solver_3 = model_3.getSolver();
         System.out.println("Liste des motifs maximaux for the dataset contextPasquier99:");
         while (solver_3.solve()) {
-            Questions_mars.printPattern(database, x_3, freq_3);
+            ChocoMiningQuestions.printPattern(database, x_3, freq_3);
         }       
 
         //Q4 : Motifs rares
@@ -82,7 +78,7 @@ public class Questions_mars{
         Solver solver_4 = model_4.getSolver();
         System.out.println("Liste des motifs rares for the dataset contextPasquier99:");
         while (solver_4.solve()) {
-            Questions_mars.printPattern(database, x_4, freq_4);
+            ChocoMiningQuestions.printPattern(database, x_4, freq_4);
         }
 
         // Q5 : Motifs générateurs (sur-ensemble fréquences <= freq(motif generateur))
@@ -97,7 +93,7 @@ public class Questions_mars{
         Solver solver_5 = model_5.getSolver();
         System.out.println("Liste des motifs générateurs for the dataset contextPasquier99:");
         while (solver_5.solve()) {
-            Questions_mars.printPattern(database, x_5, freq);
+            ChocoMiningQuestions.printPattern(database, x_5, freq);
         }
 
 
@@ -119,7 +115,7 @@ public class Questions_mars{
         Solver solver_6 = model_6.getSolver();
         System.out.println("Liste des motifs minimaux for the dataset contextPasquier99:");
         while (solver_6.solve()) {
-            Questions_mars.printPattern(database, x_6, freq_6);
+            ChocoMiningQuestions.printPattern(database, x_6, freq_6);
         }
 
 
@@ -141,7 +137,7 @@ public class Questions_mars{
         Solver solver_7 = model_7.getSolver();
         System.out.println("Liste des motifs fermés de taille entre x et y for the dataset contextPasquier99:");
         while (solver_7.solve()) {
-            Questions_mars.printPattern(database, x_7, freq);
+            ChocoMiningQuestions.printPattern(database, x_7, freq);
         }
 
         int i = 2;
@@ -160,7 +156,7 @@ public class Questions_mars{
         Solver solver_8 = model_8.getSolver();
         System.out.println("Liste des motifs fermés avec présence de "+ (i+1) +" for the dataset contextPasquier99:");
         while (solver_8.solve()) {
-            Questions_mars.printPattern(database, x_8, freq);
+            ChocoMiningQuestions.printPattern(database, x_8, freq);
         }
 
         i = 2;
@@ -178,7 +174,7 @@ public class Questions_mars{
         Solver solver_9 = model_9.getSolver();
         System.out.println("Liste des motifs fermés avec absence de "+ (i+1) +" for the dataset contextPasquier99:");
         while (solver_9.solve()) {
-            Questions_mars.printPattern(database, x_9, freq);
+            ChocoMiningQuestions.printPattern(database, x_9, freq);
         }
     }
 }
