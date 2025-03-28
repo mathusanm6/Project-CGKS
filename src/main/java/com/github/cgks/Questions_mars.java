@@ -85,7 +85,100 @@ public class Questions_mars{
             Questions_mars.printPattern(database, x_4, freq_4);
         }
 
+        // Q5 : Motifs générateurs (sur-ensemble fréquences <= freq(motif generateur))
+        Model model_5 = new Model("Minimal itemset Mining");
+        BoolVar[] x_5 = model_5.boolVarArray("x_6", database.getNbItems());
+        IntVar freq = model_5.intVar("freq", 1, database.getNbTransactions());
+        //Contraintes
+        ConstraintFactory.generator(database, x_5).post();
+        ConstraintFactory.coverSize(database, freq, x_5).post();
+
+        //résolution et affichage
+        Solver solver_5 = model_5.getSolver();
+        System.out.println("Liste des motifs générateurs for the dataset contextPasquier99:");
+        while (solver_5.solve()) {
+            Questions_mars.printPattern(database, x_5, freq);
+        }
+
+
+        //Q6 : Motifs minimaux (rares et aucun sur-ensemble possible)
+        Model model_6 = new Model("Minimal itemset Mining");
+        BoolVar[] x_6 = model_6.boolVarArray("x_6", database.getNbItems());
+        a_1 = (int) (database.getNbTransactions() * 0.4);
+        //Contraintes
+        IntVar freq_6 = model_6.intVar("freq", 1, a_1-1); // -1 pour exclure la bordure qui est inclus dans les motifs fréquents
+        
+        // Contrainte de fréquence faible (motifs rares)
+        ConstraintFactory.coverSize(database, freq_6, x_6).post();
+
+        // Contrainte de fermeture (motifs fermés)
+        ConstraintFactory.coverClosure(database, x_6).post();
+
+
+        //résolution et affichage
+        Solver solver_6 = model_6.getSolver();
+        System.out.println("Liste des motifs minimaux for the dataset contextPasquier99:");
+        while (solver_6.solve()) {
+            Questions_mars.printPattern(database, x_6, freq_6);
+        }
+
+
+        //Q7 : Motifs fermés de taille entre X et Y 
+        int x = 2;
+        int y = 4;
+        a_1 = (int) (database.getNbTransactions() * 1);
+        Model model_7 = new Model("Closed Itemset Mining");
+        BoolVar[] x_7 = model_7.boolVarArray("x_7", database.getNbItems());
+        freq = model_7.intVar("freq", 1, database.getNbTransactions());
+
+        // Limite le nombre d'items dans le motif
+        model_7.sum(x_7, "<=", y).post();
+        model_7.sum(x_7, ">=", x).post();
+        // Contrainte de fermeture des motifs
+        ConstraintFactory.coverClosure(database, x_7).post();
+        ConstraintFactory.coverSize(database, freq, x_7).post();
+
+        Solver solver_7 = model_7.getSolver();
+        System.out.println("Liste des motifs fermés de taille entre x et y for the dataset contextPasquier99:");
+        while (solver_7.solve()) {
+            Questions_mars.printPattern(database, x_7, freq);
+        }
+
+        int i = 2;
+        //Q8 : Motifs fermés avec contrainte de présence des items {...}
+        Model model_8 = new Model("Closed Itemset Mining");
+        BoolVar[] x_8 = model_8.boolVarArray("x_8", database.getNbItems());
+        freq = model_8.intVar("freq", 1, database.getNbTransactions());
+
+        //Contrainte de présence
+        x_8[i].eq(1).post();
+
+        // Contrainte de fermeture 
+        ConstraintFactory.coverClosure(database, x_8).post();
+        ConstraintFactory.coverSize(database, freq, x_8).post();
+
+        Solver solver_8 = model_8.getSolver();
+        System.out.println("Liste des motifs fermés avec présence de "+ (i+1) +" for the dataset contextPasquier99:");
+        while (solver_8.solve()) {
+            Questions_mars.printPattern(database, x_8, freq);
+        }
+
+        i = 2;
+        //Q8 : Motifs fermés avec contrainte de présence des items {...}
+        Model model_9 = new Model("Closed Itemset Mining");
+        BoolVar[] x_9 = model_9.boolVarArray("x_9", database.getNbItems());
+        freq = model_9.intVar("freq", 1, database.getNbTransactions());
+
+        //Contrainte d'absence
+        x_9[i].eq(0).post();
+        // Contrainte de fermeture 
+        ConstraintFactory.coverClosure(database, x_9).post();
+        ConstraintFactory.coverSize(database, freq, x_9).post();
+
+        Solver solver_9 = model_9.getSolver();
+        System.out.println("Liste des motifs fermés avec absence de "+ (i+1) +" for the dataset contextPasquier99:");
+        while (solver_9.solve()) {
+            Questions_mars.printPattern(database, x_9, freq);
+        }
     }
-
-
 }
