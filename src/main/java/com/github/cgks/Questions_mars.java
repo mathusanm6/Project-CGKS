@@ -1,5 +1,5 @@
 
-package io.gitlab.chaver.mining.examples;
+package com.github.cgks;
 
 
 import io.gitlab.chaver.mining.patterns.constraints.factory.ConstraintFactory;
