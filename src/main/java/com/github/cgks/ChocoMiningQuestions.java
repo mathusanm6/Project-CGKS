@@ -10,6 +10,7 @@ import org.chocosolver.solver.Solver;
 import org.chocosolver.solver.variables.BoolVar;
 import org.chocosolver.solver.variables.IntVar;
 
+import java.net.URL;
 import java.util.Arrays;
 import java.util.stream.IntStream;
 
@@ -26,7 +27,10 @@ public class ChocoMiningQuestions{
     }
     public static void main(String[] args) throws Exception {
         // Read the transactional database
-        TransactionalDatabase database = new DatReader("data/contextPasquier99.dat").read();
+
+        URL url = TestSPMF.class.getResource("/data/contextPasquier99.dat");
+		String path = java.net.URLDecoder.decode(url.getPath(),"UTF-8");
+        TransactionalDatabase database = new DatReader(path).read();
 
         //Q1 : Énumérer les motifs ensemblistes fréquents + 60%
         Model model_1 = new Model("Maximal Itemset Mining");
