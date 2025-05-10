@@ -1,3 +1,4 @@
+# Back-end
 target/
 *.log
 *.class
@@ -17,3 +18,8 @@ target/
 spmf/
 choco-mining/
 output.txt
+
+# Front-end
+
+# Front-end Docs
+/frontend-docs/swagger-ui/*
