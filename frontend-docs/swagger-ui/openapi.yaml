@@ -1,0 +1,393 @@
+openapi: 3.1.0
+info:
+  title: Itemset Mining API
+  version: 1.0.1
+  description: >
+    REST API for itemset mining queries using declarative constraints, supporting both Choco-Mining and SPMF backends.
+    Frontend provides structured constraints, while backend selects or adapts engines appropriately.
+
+servers:
+  - url: https://api.itemsetmining.local
+    description: Development server
+
+paths:
+  /queries/submit:
+    post:
+      summary: Submit a new itemset mining query
+      description: >
+        Submit a query with constraints. The backend selects or configures the appropriate mining engine.
+        The `threshold` parameter is required and defines the minimum support for pattern selection.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QueryRequest"
+            examples:
+              example-1:
+                value:
+                  dataset: mushroom.csv
+                  engine: auto
+                  threshold: 0.2
+                  thresholdType: percentage
+                  patternType:
+                    frequency: frequent
+                    border: maximal
+                    structure: ["closed"]
+                  itemConstraints:
+                    - attribute: category
+                      operator: in
+                      value: ["food", "cleaning"]
+                    - attribute: cost
+                      operator: "<="
+                      value: 15
+                  transactionConstraints:
+                    - attribute: region
+                      operator: between
+                      value: [1, 2]
+                    - attribute: weekday
+                      operator: in
+                      value: ["Mon", "Wed", "Fri"]
+      responses:
+        "200":
+          description: Query accepted and processing started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  queryId:
+                    type: string
+                    format: uuid
+        "400":
+          description: Malformed request or missing fields
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Semantic error in query
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /queries/{id}/status:
+    get:
+      summary: Get the status of a submitted query
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The unique identifier of the query.
+      responses:
+        "200":
+          description: Current query status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  queryId:
+                    type: string
+                  status:
+                    type: string
+                    enum: [pending, running, completed, failed]
+        "404":
+          description: Query ID not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /queries/{id}/result:
+    get:
+      summary: Get results of a completed query
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The unique identifier of the query.
+      responses:
+        "200":
+          description: Query result and summary statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueryResult"
+        "404":
+          description: Query ID not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /queries/validate:
+    post:
+      summary: Validate a query definition
+      description: Check semantic correctness of query constraints and combinations.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QueryRequest"
+      responses:
+        "200":
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                  errors:
+                    type: array
+                    items:
+                      type: string
+        "400":
+          description: Malformed input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /constraints:
+    get:
+      summary: Get supported constraint types and attributes
+      description: Lists all constraintable attributes and allowed operators for both items and transactions.
+      responses:
+        "200":
+          description: Attribute metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConstraintMetadata"
+
+  /datasets:
+    get:
+      summary: List available datasets
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+          description: Maximum number of datasets to return.
+        - in: query
+          name: offset
+          schema:
+            type: integer
+          description: Offset for pagination.
+      responses:
+        "200":
+          description: Dataset list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    description:
+                      type: string
+
+  /datasets/upload:
+    post:
+      summary: Upload a new dataset file
+      description: >
+        Accepts a new CSV transactional dataset.
+        The file must have one transaction per line, with items comma-separated. Example:
+        "milk,bread,cheese"
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Upload successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  datasetName:
+                    type: string
+        "400":
+          description: Invalid or missing file
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Dataset with the same name already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        path:
+          type: string
+        details:
+          type: array
+          items:
+            type: string
+
+    QueryRequest:
+      type: object
+      properties:
+        dataset:
+          type: string
+        engine:
+          type: string
+          enum: [auto, spmf, choco]
+        threshold:
+          type: number
+          format: float
+          description: The minimum support (alpha) value.
+        thresholdType:
+          type: string
+          enum: [percentage, absolute]
+          default: percentage
+          description: Indicates if threshold is a percentage or count.
+        patternType:
+          type: object
+          properties:
+            frequency:
+              type: string
+              enum: [frequent, rare]
+            border:
+              type: string
+              enum: [maximal, minimal]
+              nullable: true
+            structure:
+              type: array
+              items:
+                type: string
+                description: 'Allowed values: "closed", "generator"'
+        itemConstraints:
+          type: array
+          items:
+            $ref: "#/components/schemas/Constraint"
+        transactionConstraints:
+          type: array
+          items:
+            $ref: "#/components/schemas/Constraint"
+
+    Constraint:
+      type: object
+      properties:
+        attribute:
+          type: string
+        operator:
+          type: string
+        value:
+          oneOf:
+            - type: string
+            - type: number
+            - type: array
+              items:
+                oneOf:
+                  - type: string
+                  - type: number
+
+    ConstraintMetadata:
+      type: object
+      properties:
+        itemConstraints:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConstraintDefinition"
+        transactionConstraints:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConstraintDefinition"
+
+    ConstraintDefinition:
+      type: object
+      properties:
+        attribute:
+          type: string
+        type:
+          type: string
+          enum: [categorical, numeric]
+        operators:
+          type: array
+          items:
+            type: string
+
+    QueryResult:
+      type: object
+      properties:
+        queryId:
+          type: string
+        engineUsed:
+          type: string
+          enum: [spmf, choco]
+        executionTime:
+          type: number
+        patterns:
+          type: array
+          items:
+            type: object
+            properties:
+              items:
+                type: array
+                items:
+                  type: string
+              support:
+                type: number
+        summary:
+          type: object
+          properties:
+            numPatterns:
+              type: integer
+            avgPatternLength:
+              type: number
+            supportRange:
+              type: array
+              items:
+                type: number
+            topItems:
+              type: array
+              items:
+                type: string
+        warnings:
+          type: array
+          items:
+            type: string
