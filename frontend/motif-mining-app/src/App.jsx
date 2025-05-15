@@ -1,7 +1,17 @@
 import React, { useState } from "react";
 import axios from "axios";
 
-const datasets = ["contextPasquier99.dat", "accidents.dat"];
+const datasets = [
+  "anneal",
+  "chess",
+  "connect",
+  "contextPasquier99",
+  "eisen",
+  "heart-cleveland",
+  "iris",
+  "mushroom",
+  "pumsb",
+];
 const queryTypes = [
   { id: "frequent", label: "Motifs fréquents" },
   { id: "closed", label: "Motifs fermés" },
@@ -11,7 +21,7 @@ const queryTypes = [
   { id: "minimal", label: "Motifs minimaux" },
   { id: "size_between", label: "Fermés de taille X-Y" },
   { id: "presence", label: "Fermés avec items présents" },
-  { id: "absence", label: "Fermés avec items absents" }
+  { id: "absence", label: "Fermés avec items absents" },
 ];
 
 export default function App() {
