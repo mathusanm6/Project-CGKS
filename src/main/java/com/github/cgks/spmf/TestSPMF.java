@@ -82,21 +82,6 @@ public class TestSPMF {
 		return itemsets;
 	}
 
-	public static Itemsets runFreqGenerator(String input, double minsup) throws IOException{
-		//AlgoDefMe algo = new AlgoDefMe();
-		AlgoPASCAL algo = new AlgoPASCAL();
-		long beginS = System.currentTimeMillis();
-		
-		algo.runAlgorithm(minsup, input, null);
-		//Itemsets results = algo.;
-
-		printRuntimeExecution(beginS);
-		// Print stats and itemsets found
-		//TestSPMF.printRunStats(itemsets, dataset.getTransactions().size(), beginS);
-		//return itemsets;
-		return null;
-	}
-	
 	public static Itemsets runRare(String input, double maxsup) throws IOException{
 		Dataset dataset = new Dataset(input);
 		// Applying the algorithm
