@@ -59,40 +59,4 @@ public class SpmfMiner implements Miner {
     public List<MiningResult> extractAbsence(String datasetPath, Map<String, String> params) throws Exception {
         return new ArrayList<>();
     }
-
-    @Override
-    public  List<MiningResult> extractMaximal(String datasetPath, Map<String, String> params) {
-        return new ArrayList<>();
-    }
-
-    @Override
-    public List<MiningResult> extractRare(String datasetPath, Map<String, String> params) {
-        return new ArrayList<>();
-    }
-
-    @Override
-    public  List<MiningResult> extractGenerators(String datasetPath, Map<String, String> params) {
-        return new ArrayList<>();
-    }
-
-    @Override
-    public List<MiningResult> extractMinimal(String datasetPath, Map<String, String> params) {
-        return new ArrayList<>();
-    }
-
-    @Override
-    public  List<MiningResult> extractSizeBetween(String datasetPath, Map<String, String> params) {
-        return new ArrayList<>();
-    }
-
-    @Override
-    public List<MiningResult> extractPresence(String datasetPath, Map<String, String> params) {
-        return new ArrayList<>();
-    }
-
-    @Override
-    public  List<MiningResult> extractAbsence(String datasetPath, Map<String, String> params) {
-        return new ArrayList<>();
-    }
-
 }
