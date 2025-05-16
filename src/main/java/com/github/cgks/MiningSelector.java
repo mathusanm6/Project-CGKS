@@ -10,9 +10,9 @@ public class MiningSelector {
         // request.
         // For now, we will just return randomly either ChocoMining or SPMF.
         if (true) {
-            return new ChocoMiner();
-        } else {
             return new SpmfMiner();
+        } else {
+            return new ChocoMiner();
         }
     }
 }
