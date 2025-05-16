@@ -259,14 +259,17 @@ public static Itemsets filterByInclusion(Dataset dataset, double minsup, int siz
 	 * @param excludedItems Liste d'items à exclure (peut être null ou vide)
 	 * @return Nouvel Itemsets filtré
 	 */
-	public static Itemsets filterByExclusion(Itemsets itemsets, int sizeDB, List<Integer> excludedItems) throws IOException {
+	public static Itemsets filterByExclusion(Dataset dataset, double minsup, int sizeDB, List<Integer> excludedItems) throws IOException {
+		AlgoLCM algo = new AlgoLCM();
+		long startTime = System.currentTimeMillis();
+		Itemsets itemsets = algo.runAlgorithm(minsup, dataset, null);
+		
 		Itemsets result = new Itemsets("Itemsets sans: " + excludedItems);
 		
 		if (excludedItems == null || excludedItems.isEmpty()) {
 			return itemsets;
 		}
 
-		long startTime = System.currentTimeMillis();
 		List<Integer> sortedExcluded = new ArrayList<>(excludedItems);
 		Collections.sort(sortedExcluded);
 		
@@ -453,8 +456,9 @@ public static Itemsets filterByInclusion(Dataset dataset, double minsup, int siz
 			        break;
 				case 8:
 					excludeItems = readUserItems(scanner, excludeItems);
-					itemsets = buildUsingAprioriIfEmpty(itemsets, input);
-					itemsets = TestSPMF.filterByExclusion(itemsets, sizeDB, excludeItems);
+					System.out.print("Min support for freq closed :"  );
+					minSup = scanner.nextDouble();
+			        itemsets = TestSPMF.filterByExclusion(dataset, minSup, sizeDB, excludeItems);
 			        break;
 				case 9:
 					System.out.print("Support max (0-1) → ");
