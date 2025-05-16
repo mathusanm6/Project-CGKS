@@ -1,5 +1,5 @@
 
-package com.github.cgks;
+package com.github.cgks.choco;
 
 
 import io.gitlab.chaver.mining.patterns.constraints.factory.ConstraintFactory;
@@ -28,7 +28,7 @@ public class ChocoMiningQuestions{
     public static void main(String[] args) throws Exception {
         // Read the transactional database
 
-        URL url = TestSPMF.class.getResource("/data/contextPasquier99.dat");
+        URL url = ChocoMiningQuestions.class.getResource("/data/contextPasquier99.dat");
 		String path = java.net.URLDecoder.decode(url.getPath(),"UTF-8");
         TransactionalDatabase database = new DatReader(path).read();
 

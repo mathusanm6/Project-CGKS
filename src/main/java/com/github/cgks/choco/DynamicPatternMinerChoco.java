@@ -12,7 +12,7 @@ import org.chocosolver.solver.variables.IntVar;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
+import java.net.URL;
 import java.time.Duration;
 
 public class DynamicPatternMinerChoco {
@@ -221,8 +221,9 @@ public class DynamicPatternMinerChoco {
     }
 
     public static void main(String[] args) throws Exception {
-        TransactionalDatabase database = new DatReader(
-            "projet-isd-cgks/src/main/resources/data/contextPasquier99.dat").read();
+        URL url = DynamicPatternMinerChoco.class.getResource("/data/contextPasquier99.dat");
+		String path = java.net.URLDecoder.decode(url.getPath(),"UTF-8");
+        TransactionalDatabase database = new DatReader(path).read();
 
         Scanner scanner = new Scanner(System.in).useLocale(Locale.US);
         while (true) {

@@ -5,13 +5,13 @@ all: clean deps build
 
 # Backend (Java - Maven)
 clean:
-	cd backend && mvn clean
+	mvn clean
 
 deps:
-	cd backend && mvn dependency:resolve dependency:sources
+	mvn dependency:resolve dependency:sources
 
 build:
-	cd backend && mvn install
+	mvn install
 
 # Frontend (React - npm)
 # frontend:
