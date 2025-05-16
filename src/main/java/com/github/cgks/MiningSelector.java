@@ -9,7 +9,7 @@ public class MiningSelector {
         // TODO(jewin): Implement the logic to choose the mining engine based on the
         // request.
         // For now, we will just return randomly either ChocoMining or SPMF.
-        if (Math.random() < 0.5) {
+        if (true) {
             return new ChocoMiner();
         } else {
             return new SpmfMiner();

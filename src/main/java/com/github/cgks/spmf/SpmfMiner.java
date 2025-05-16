@@ -12,16 +12,51 @@ import com.github.cgks.MiningResult;
 
 // import ca.pfv.spmf.algorithms.frequentpatterns.fpgrowth.AlgoFPGrowth;
 
-public class SpmfMiner implements Miner{
+public class SpmfMiner implements Miner {
     // TODO(unknown): Implement this class to use SPMF for mining patterns.
 
     @Override
-    public  List<MiningResult> extractFrequent(String datasetPath, Map<String, String> params) {
+    public List<MiningResult> extractFrequent(String datasetPath, Map<String, String> params) throws Exception {
         return new ArrayList<>();
     }
 
     @Override
-    public List<MiningResult> extractClosed(String datasetPath, Map<String, String> params) {
+    public List<MiningResult> extractClosed(String datasetPath, Map<String, String> params) throws Exception {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public List<MiningResult> extractMaximal(String datasetPath, Map<String, String> params) throws Exception {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public List<MiningResult> extractRare(String datasetPath, Map<String, String> params) throws Exception {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public List<MiningResult> extractGenerators(String datasetPath, Map<String, String> params) throws Exception {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public List<MiningResult> extractMinimal(String datasetPath, Map<String, String> params) throws Exception {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public List<MiningResult> extractSizeBetween(String datasetPath, Map<String, String> params) throws Exception {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public List<MiningResult> extractPresence(String datasetPath, Map<String, String> params) throws Exception {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public List<MiningResult> extractAbsence(String datasetPath, Map<String, String> params) throws Exception {
         return new ArrayList<>();
     }
 
