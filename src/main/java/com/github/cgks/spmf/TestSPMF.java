@@ -212,8 +212,13 @@ public class TestSPMF {
  * @param requiredItems Les items qui doivent tous être présents (peut être null ou vide)
  * @return Un nouvel objet Itemsets filtré
  */
-	public static Itemsets filterByInclusion(Itemsets itemsets, int sizeDB, List<Integer> requiredItems) throws IOException {
+public static Itemsets filterByInclusion(Dataset dataset, double minsup, int sizeDB, List<Integer> requiredItems) throws IOException {
 		// Création du résultat avec un nom descriptif
+		AlgoLCM algo = new AlgoLCM();
+		long startTime = System.currentTimeMillis();
+		Itemsets itemsets = algo.runAlgorithm(minsup, dataset, null);
+
+		
 		Itemsets result = new Itemsets("Itemsets contenant tous: " + requiredItems);
 
 		// Cas spécial: si aucun item requis, on retourne tout
@@ -221,7 +226,6 @@ public class TestSPMF {
 			return itemsets;
 		}
 
-		long startTime = System.currentTimeMillis();
 		// Tri des items requis pour la recherche binaire
 		List<Integer> sortedRequired = new ArrayList<>(requiredItems);
 		Collections.sort(sortedRequired);
@@ -443,8 +447,9 @@ public class TestSPMF {
 			        break;
 				case 7:
 			        requiredItems = readUserItems(scanner, requiredItems);
-					itemsets = buildUsingAprioriIfEmpty(itemsets, input);
-					itemsets = TestSPMF.filterByInclusion(itemsets, sizeDB, requiredItems);
+					System.out.print("Min support for freq closed :"  );
+					minSup = scanner.nextDouble();
+			        itemsets = TestSPMF.filterByInclusion(dataset, minSup, sizeDB, requiredItems);
 			        break;
 				case 8:
 					excludeItems = readUserItems(scanner, excludeItems);
