@@ -2,15 +2,15 @@ import React, { useState } from "react";
 import axios from "axios";
 
 const datasets = [
-  "anneal",
-  "chess",
-  "connect",
-  "contextPasquier99",
-  "eisen",
-  "heart-cleveland",
-  "iris",
-  "mushroom",
-  "pumsb",
+  { label: "anneal", path: "/data/anneal.dat" },
+  { label: "chess", path: "/data/chess.dat" },
+  { label: "connect", path: "/data/connect.dat" },
+  { label: "contextPasquier99", path: "/data/contextPasquier99.dat" },
+  { label: "eisen", path: "/data/eisen.dat" },
+  { label: "heart-cleveland", path: "/data/heart-cleveland.dat" },
+  { label: "iris", path: "/data/iris.dat" },
+  { label: "mushroom", path: "/data/mushroom.dat" },
+  { label: "pumsb", path: "/data/pumsb.dat" },
 ];
 const queryTypes = [
   { id: "frequent", label: "Motifs fréquents" },
@@ -52,7 +52,7 @@ export default function App() {
         return (
           <input
             type="number"
-            name="minSupp"
+            name="minSupport"
             placeholder="Support minimum (%)"
             onChange={handleParamChange}
             className="border p-2 w-full my-2"
@@ -98,13 +98,11 @@ export default function App() {
       <h1 className="text-2xl font-bold mb-4">Fouille de motifs</h1>
 
       <label>Dataset :</label>
-      <select
-        value={dataset}
-        onChange={(e) => setDataset(e.target.value)}
-        className="border p-2 w-full my-2"
-      >
+      <select value={dataset} onChange={(e) => setDataset(e.target.value)}>
         {datasets.map((d) => (
-          <option key={d}>{d}</option>
+          <option key={d.label} value={d.path}>
+            {d.label}
+          </option>
         ))}
       </select>
 
