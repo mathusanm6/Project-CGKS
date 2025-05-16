@@ -17,6 +17,11 @@ public class MiningController {
     @PostMapping
     public List<MiningResult> mine(@RequestBody MiningRequest request) {
         MiningEngine engine = new MiningEngine();
-        return engine.runMining(request); // On exécute la requête
+        try {
+            return engine.runMining(request);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return List.of();
+        }
     }
 }

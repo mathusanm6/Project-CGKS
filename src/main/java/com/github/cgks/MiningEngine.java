@@ -5,7 +5,7 @@ import java.util.Map;
 
 public class MiningEngine {
 
-    public List<MiningResult> runMining(MiningRequest request) {
+    public List<MiningResult> runMining(MiningRequest request) throws Exception {
         // TODO(unknown): Implement the logic to run the mining algorithm using SPMF.
 
         String queryType = request.getQueryType();
