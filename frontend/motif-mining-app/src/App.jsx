@@ -25,7 +25,7 @@ const queryTypes = [
 ];
 
 export default function App() {
-  const [dataset, setDataset] = useState(datasets[0]);
+  const [dataset, setDataset] = useState(datasets[0].path);
   const [query, setQuery] = useState(queryTypes[0].id);
   const [params, setParams] = useState({});
   const [results, setResults] = useState([]);
