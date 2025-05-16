@@ -6,8 +6,6 @@ import java.util.Map;
 public class MiningEngine {
 
     public List<MiningResult> runMining(MiningRequest request) throws Exception {
-        // TODO(unknown): Implement the logic to run the mining algorithm using SPMF.
-
         String queryType = request.getQueryType();
         String datasetName = request.getDataset();
         Map<String, String> params = request.getParams();
@@ -18,6 +16,20 @@ public class MiningEngine {
                 return miner.extractFrequent(datasetName, params);
             case "closed":
                 return miner.extractClosed(datasetName, params);
+            case "maximal":
+                return miner.extractMaximal(datasetName, params);
+            case "rare":
+                return miner.extractRare(datasetName, params);
+            case "generators":
+                return miner.extractGenerators(datasetName, params);
+            case "minimal":
+                return miner.extractMinimal(datasetName, params);
+            case "sizeBetween":
+                return miner.extractSizeBetween(datasetName, params);
+            case "presence":
+                return miner.extractPresence(datasetName, params);
+            case "absence":
+                return miner.extractAbsence(datasetName, params);
             default:
                 throw new IllegalArgumentException("Unknown query type: " + queryType);
         }
