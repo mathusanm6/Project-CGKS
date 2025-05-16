@@ -175,7 +175,12 @@ public class TestSPMF {
 	 * @param maxSize Taille maximale (inclusive)
 	 * @return Nouvel Itemsets respectant la contrainte de taille
 	 */
-	public static Itemsets filterBySize(Itemsets itemsets, int sizeDB, int minSize, int maxSize) throws IOException {
+	public static Itemsets filterBySize(Dataset dataset, double minsup, int sizeDB, int minSize, int maxSize) throws IOException {
+		// Création du résultat avec un nom descriptif
+		AlgoLCM algo = new AlgoLCM();
+		long startTime = System.currentTimeMillis();
+		Itemsets itemsets = algo.runAlgorithm(minsup, dataset, null);
+		
 		Itemsets result = new Itemsets( 
 			String.format("Itemsets de taille %d à %d", minSize, maxSize)
 		);
@@ -185,7 +190,6 @@ public class TestSPMF {
 			throw new IllegalArgumentException("Tailles invalides");
 		}
 
-		long startTime = System.currentTimeMillis();
 
 		for (List<Itemset> level : itemsets.getLevels()) {
 			for (Itemset itemset : level) {
@@ -433,8 +437,9 @@ public class TestSPMF {
 					System.out.print("Unique itemsets :" + dataset.getUniqueItems());
 					System.out.print("Max itemsets :" + dataset.getMaxItem());
 					System.out.print("Tx itemsets :" + dataset.getTransactions());
-					itemsets = buildUsingAprioriIfEmpty(itemsets, input);
-			        itemsets = TestSPMF.filterBySize(itemsets, minSize, minSize, maxSize);
+					System.out.print("Min support for freq generator :"  );
+					minSup = scanner.nextDouble();
+			        itemsets = TestSPMF.filterBySize(dataset, minSup, sizeDB, minSize, maxSize);
 			        break;
 				case 7:
 			        requiredItems = readUserItems(scanner, requiredItems);
