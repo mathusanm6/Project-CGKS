@@ -11,7 +11,6 @@ import com.github.cgks.MiningResult;
 
 public class ChocoMiner implements Miner {
     // TODO(unknown): Implement this class to use Choco solver for mining patterns.
-    // This class should contain all the methods needed.
 
     public List<MiningResult> extractFrequent(String datasetPath, Map<String, String> params) {
         List<MiningResult> results = new ArrayList<>();
@@ -22,4 +21,40 @@ public class ChocoMiner implements Miner {
         List<MiningResult> results = new ArrayList<>();
         return results;
     }
+
+    public List<MiningResult> extractMaximal(String datasetPath, Map<String, String> params) {
+        List<MiningResult> results = new ArrayList<>();
+        return results;
+    }
+
+    public List<MiningResult> extractRare(String datasetPath, Map<String, String> params) {
+        List<MiningResult> results = new ArrayList<>();
+        return results;
+    }
+
+    public List<MiningResult> extractGenerators(String datasetPath, Map<String, String> params) {
+        List<MiningResult> results = new ArrayList<>();
+        return results;
+    }
+
+    public List<MiningResult> extractMinimal(String datasetPath, Map<String, String> params) {
+        List<MiningResult> results = new ArrayList<>();
+        return results;
+    }
+
+    public List<MiningResult> extractSizeBetween(String datasetPath, Map<String, String> params) {
+        List<MiningResult> results = new ArrayList<>();
+        return results;
+    }
+
+    public List<MiningResult> extractPresence(String datasetPath, Map<String, String> params) {
+        List<MiningResult> results = new ArrayList<>();
+        return results;
+    }
+
+    public List<MiningResult> extractAbsence(String datasetPath, Map<String, String> params) {
+        List<MiningResult> results = new ArrayList<>();
+        return results;
+    }
+
 }
