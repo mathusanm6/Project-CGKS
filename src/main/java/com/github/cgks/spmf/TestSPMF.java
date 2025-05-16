@@ -16,8 +16,8 @@ import java.util.stream.Collectors;
 import ca.pfv.spmf.algorithms.frequentpatterns.lcm.Dataset;
 import ca.pfv.spmf.patterns.itemset_array_integers_with_count.Itemset;
 import ca.pfv.spmf.patterns.itemset_array_integers_with_count.Itemsets;
-import io.gitlab.chaver.mining.patterns.io.DatReader;
-import io.gitlab.chaver.mining.patterns.io.TransactionalDatabase;
+// import io.gitlab.chaver.mining.patterns.io.DatReader;
+// import io.gitlab.chaver.mining.patterns.io.TransactionalDatabase;
 // Import algorithms
 import ca.pfv.spmf.algorithms.frequentpatterns.lcm.AlgoLCMFreq; // Freq 
 import ca.pfv.spmf.algorithms.frequentpatterns.lcm.AlgoLCM; // Freq closed 
@@ -27,10 +27,9 @@ import ca.pfv.spmf.algorithms.frequentpatterns.apriori_rare.AlgoAprioriRare; // 
 //import ca.pfv.spmf.algorithms.frequentpatterns.rpgrowth.AlgoRPGrowth; // Rare 
 import ca.pfv.spmf.algorithms.frequentpatterns.zart.*; // Min Gen
 //import ca.pfv.spmf.algorithms.frequentpatterns.defme.AlgoDefMe; // Freq Gen
-import ca.pfv.spmf.algorithms.frequentpatterns.pascal.AlgoPASCAL; // Freq and Gen
+// import ca.pfv.spmf.algorithms.frequentpatterns.pascal.AlgoPASCAL; // Freq and Gen
 import ca.pfv.spmf.input.transaction_database_list_integers.TransactionDatabase;
 
-import com.github.cgks.choco.DynamicPatternMinerChoco;
 import com.github.cgks.spmf.rpgrowth.*;
 
 
@@ -401,7 +400,7 @@ public static Itemsets filterByInclusion(Dataset dataset, double minsup, int siz
 			System.out.println("║ 2. Itemsets fermés              ║");
 			System.out.println("║ 3. Itemsets maximaux            ║");
 			System.out.println("║ 4. Itemsets rares               ║");
-			System.out.println("║ 5. Générateurs 		            ║");
+			System.out.println("║ 5. Générateurs                  ║");
 			System.out.println("║ 6. Par taille                   ║");
 			System.out.println("║ 7. Inclusion d'items            ║");
 			System.out.println("║ 8. Exclusion d'items            ║");
