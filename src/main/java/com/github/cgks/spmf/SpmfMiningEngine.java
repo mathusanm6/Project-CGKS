@@ -3,10 +3,11 @@ package com.github.cgks.spmf;
 import java.util.List;
 import java.util.Map;
 
+import com.github.cgks.MiningEngine;
 import com.github.cgks.MiningRequest;
 import com.github.cgks.MiningResult;
 
-public class SpmfMiningEngine {
+public class SpmfMiningEngine implements MiningEngine {
     @Override
     public List<MiningResult> runMining(MiningRequest request) {
         // TODO(unknown): Implement the logic to run the mining algorithm using SPMF.
