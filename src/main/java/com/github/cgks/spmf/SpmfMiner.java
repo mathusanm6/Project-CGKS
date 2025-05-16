@@ -13,6 +13,8 @@ import java.util.Map;
 import com.github.cgks.Miner;
 import com.github.cgks.MiningResult;
 
+import ca.pfv.spmf.algorithms.frequentpatterns.fpgrowth.AlgoFPMax;
+import ca.pfv.spmf.algorithms.frequentpatterns.lcm.AlgoLCM;
 import ca.pfv.spmf.algorithms.frequentpatterns.lcm.AlgoLCMFreq;
 import ca.pfv.spmf.algorithms.frequentpatterns.lcm.Dataset;
 import ca.pfv.spmf.patterns.itemset_array_integers_with_count.Itemsets;
@@ -44,13 +46,22 @@ public class SpmfMiner implements Miner {
 
     @Override
     public List<MiningResult> extractClosed(String datasetPath, Map<String, String> params) throws Exception {
-        return new ArrayList<>();
+        Dataset dataset = pathToDataset(datasetPath);
+		Double minSupport = Double.parseDouble(params.get("minSupport"));
+		AlgoLCM algo = new AlgoLCM();
+		Itemsets itemsets = algo.runAlgorithm(minSupport, dataset, null);
+		return ConvertToMiningResult.convertItemsetsToMiningResults(itemsets);
     }
 
     @Override
     public List<MiningResult> extractMaximal(String datasetPath, Map<String, String> params) throws Exception {
-        return new ArrayList<>();
-    }
+        //Dataset dataset = pathToDataset(datasetPath);
+        Double minSupport = Double.parseDouble(params.get("minSupport"));
+		//AlgoLCMMax algo = new AlgoLCMMax(); // Algo avec la version locale Non dispo
+		AlgoFPMax algo = new AlgoFPMax();
+		Itemsets itemsets = algo.runAlgorithm(fileToPath(datasetPath), null, minSupport);
+		return ConvertToMiningResult.convertItemsetsToMiningResults(itemsets);
+	}
 
     @Override
     public List<MiningResult> extractRare(String datasetPath, Map<String, String> params) throws Exception {
