@@ -20,8 +20,6 @@ public class SpmfMiningEngine {
                 return SpmfMiner.extractFrequent(datasetPath, params);
             case "closed":
                 return SpmfMiner.extractClosed(datasetPath, params);
-            case "maximal":
-                return SpmfMiner.extractMaximal(datasetPath, params);
             default:
                 throw new IllegalArgumentException("Unknown query type: " + queryType);
         }

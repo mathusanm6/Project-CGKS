@@ -13,7 +13,7 @@ import ca.pfv.spmf.algorithms.frequentpatterns.fpgrowth.AlgoFPGrowth;
 
 public class SpmfMiner {
     // TODO(unknown): Implement this class to use SPMF for mining patterns.
-    
+
     public static List<MiningResult> extractFrequent(String datasetPath, Map<String, String> params) {
         double minsup = Double.parseDouble(params.getOrDefault("minSupp", "60")) / 100.0;
         String outputPath = "output/spmf_frequent.txt";
