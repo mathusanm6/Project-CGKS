@@ -29,7 +29,7 @@ public class DynamicPatternMinerChoco {
         }
 
         public void apply(Model model, TransactionalDatabase database, BoolVar[] x, IntVar freq) {
-            int minFreq = (int) (database.getNbTransactions() * this.minSupport);
+            int minFreq = (int) Math.ceil(database.getNbTransactions() * this.minSupport);
             model.arithm(freq, ">=", minFreq).post(); 
             ConstraintFactory.coverSize(database, freq, x).post();
         }
@@ -43,7 +43,7 @@ public class DynamicPatternMinerChoco {
         }
 
         public void apply(Model model, TransactionalDatabase database, BoolVar[] x, IntVar freq) {
-            int minFreq = (int) (database.getNbTransactions() * this.maxSupport);
+            int minFreq = (int) Math.ceil(database.getNbTransactions() * this.maxSupport);
             model.arithm(freq, "<", minFreq).post(); 
             ConstraintFactory.coverSize(database, freq, x).post();
         }
@@ -58,7 +58,7 @@ public class DynamicPatternMinerChoco {
 
         @Override
         public void apply(Model model, TransactionalDatabase database, BoolVar[] x, IntVar freq) {
-            int minFreq = (int) (database.getNbTransactions() * this.minSupport);
+            int minFreq = (int) Math.ceil(database.getNbTransactions() * this.minSupport);
             model.arithm(freq, ">=", minFreq).post(); 
             ConstraintFactory.coverSize(database, freq, x).post();
             ConstraintFactory.coverClosure(database, x).post();
@@ -74,9 +74,9 @@ public class DynamicPatternMinerChoco {
 
         @Override
         public void apply(Model model, TransactionalDatabase database, BoolVar[] x, IntVar freq) {
-            int minFreq = (int) (database.getNbTransactions() * this.minSupport);
+            int minFreq = (int) Math.ceil(database.getNbTransactions() * this.minSupport);
             model.arithm(freq, ">=", minFreq).post(); 
-            //ConstraintFactory.coverSize(database, freq, x).post();
+            ConstraintFactory.coverSize(database, freq, x).post();
             ConstraintFactory.generator(database, x).post();
         }
     }
@@ -90,7 +90,7 @@ public class DynamicPatternMinerChoco {
 
         @Override
         public void apply(Model model, TransactionalDatabase database, BoolVar[] x, IntVar freq) {
-            int minFreq = (int) (database.getNbTransactions() * this.minSupport);
+            int minFreq = (int) Math.ceil(database.getNbTransactions() * this.minSupport);
             model.arithm(freq, ">=", minFreq).post(); 
             ConstraintFactory.coverSize(database, freq, x).post();
             ConstraintFactory.infrequentSupers(database, minFreq, x).post(); 
@@ -106,7 +106,7 @@ public class DynamicPatternMinerChoco {
 
         @Override
         public void apply(Model model, TransactionalDatabase database, BoolVar[] x, IntVar freq) {
-            int maxFreq = (int) (database.getNbTransactions() * this.maxSupport);
+            int maxFreq = (int) Math.ceil(database.getNbTransactions() * this.maxSupport);
             model.arithm(freq, "<", maxFreq).post(); 
             ConstraintFactory.coverSize(database, freq, x).post();
             ConstraintFactory.frequentSubs(database, maxFreq, x).post();
