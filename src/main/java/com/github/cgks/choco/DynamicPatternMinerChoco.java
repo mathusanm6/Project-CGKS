@@ -164,7 +164,7 @@ public class DynamicPatternMinerChoco {
                                    String description) {
         Model model = new Model("Pattern Mining: " + description);
         BoolVar[] x = model.boolVarArray("x", database.getNbItems());
-        IntVar freq = model.intVar("freq", 0, database.getNbTransactions());
+        IntVar freq = model.intVar("freq", 1, database.getNbTransactions());
 
         for (MiningConstraint constraint : constraints) {
             constraint.apply(model, database, x, freq);
