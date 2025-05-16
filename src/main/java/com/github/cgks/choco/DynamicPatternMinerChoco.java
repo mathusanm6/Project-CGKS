@@ -201,7 +201,7 @@ public class DynamicPatternMinerChoco {
             System.out.println("Temps de résolution : " + exec_time + " ms");
         }
         System.out.println("----------------------------------------");
-        System.out.println("Total motifs trouvés : " + (solutionCount - 1));        
+        System.out.println("Total motifs trouvés : " + (solutionCount));        
         System.out.println("Statistiques : " + solver.getNodeCount() + " nœuds explorés\n");
     }
 
