@@ -112,7 +112,7 @@ public class TestSPMF {
 		return itemsets;
 	}
 
-	public static Itemsets runMinimalGenerator(String input, double minsup) throws IOException{
+	public static Itemsets runFreqGenerator(String input, double minsup) throws IOException{
 		// Load a binary context
 		TransactionDatabase context = new TransactionDatabase();
 		context.loadFile(input);
@@ -123,17 +123,35 @@ public class TestSPMF {
 		TZTableClosed algoItems = algo.runAlgorithm(context, minsup);
 		Itemsets itemsets = new Itemsets("Generator itemset");
 		
-		int level = 0;
-		List<Itemset> closedList = algoItems.getLevelForZart(level);
-		while(closedList.size()>0){
-			for(Itemset item: closedList){
-				List<Itemset> gen = getGeneratorFromMap(algoItems.mapGenerators, item);
-				addItemsFromLItems(gen, itemsets);
-			}
-			closedList = algoItems.getLevelForZart(level);
-			level++;
+		// System.out.println(algoItems.mapGenerators.size());
+		// int level = 0;
+		// List<Itemset> closedList = algoItems.getLevelForZart(level);
+		// while(closedList.size()>0){
+		// 	for(Itemset item: closedList){
+		// 		List<Itemset> gen = getGeneratorFromMap(algoItems.mapGenerators, item);
+		// 		addItemsFromLItems(gen, itemsets);
+		// 	}
+		// 	closedList = algoItems.getLevelForZart(level);
+		// 	level++;
 			
-		};
+		// };
+
+		TZTableClosed results = algoItems;
+		System.out.println("======= List of closed itemsets and their generators ============");
+		for(int i=0; i< results.levels.size(); i++){
+			for(Itemset closed : results.levels.get(i)){
+				List<Itemset> generators = results.mapGenerators.get(closed);
+				// if there are some generators
+				if(generators.size()!=0) { 
+					for(Itemset generator : generators){
+						itemsets.addItemset(generator, i);
+					}
+				}else {
+					// otherwise the closed itemset is a generator
+					itemsets.addItemset(closed, i);
+				}
+			}
+		}
 
 		// Print stats and itemsets found
 		TestSPMF.printRunStats(itemsets, context.getTransactions().size(), beginS);
@@ -404,7 +422,7 @@ public class TestSPMF {
 				case 5:
 			        System.out.print("Support minimum (0-1) → ");
 			        minSup = scanner.nextDouble();
-					itemsets = TestSPMF.runMinimalGenerator(input, minSup);
+					itemsets = TestSPMF.runFreqGenerator(input, minSup);
 			        break;
 
 				case 6:
