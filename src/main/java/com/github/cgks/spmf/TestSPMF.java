@@ -16,7 +16,8 @@ import java.util.stream.Collectors;
 import ca.pfv.spmf.algorithms.frequentpatterns.lcm.Dataset;
 import ca.pfv.spmf.patterns.itemset_array_integers_with_count.Itemset;
 import ca.pfv.spmf.patterns.itemset_array_integers_with_count.Itemsets;
-
+import io.gitlab.chaver.mining.patterns.io.DatReader;
+import io.gitlab.chaver.mining.patterns.io.TransactionalDatabase;
 // Import algorithms
 import ca.pfv.spmf.algorithms.frequentpatterns.lcm.AlgoLCMFreq; // Freq 
 import ca.pfv.spmf.algorithms.frequentpatterns.lcm.AlgoLCM; // Freq closed 
@@ -28,6 +29,8 @@ import ca.pfv.spmf.algorithms.frequentpatterns.zart.*; // Min Gen
 //import ca.pfv.spmf.algorithms.frequentpatterns.defme.AlgoDefMe; // Freq Gen
 import ca.pfv.spmf.algorithms.frequentpatterns.pascal.AlgoPASCAL; // Freq and Gen
 import ca.pfv.spmf.input.transaction_database_list_integers.TransactionDatabase;
+
+import com.github.cgks.choco.DynamicPatternMinerChoco;
 import com.github.cgks.spmf.rpgrowth.*;
 
 
@@ -374,7 +377,7 @@ public static Itemsets filterByInclusion(Dataset dataset, double minsup, int siz
 
 
 	public static void main(String [] arg) throws IOException, Exception{
-		String input = fileToPath("/data/contextPasquier99.dat");
+		String input = fileToPath("/data/contextPasquier99.dat"); // filteToPath do the same thing as choco for path retrieval
 		Dataset dataset = new Dataset(input);
 		Scanner scanner = new Scanner(System.in).useLocale(Locale.US);
 		double minSup = 0.0, maxSup = 0.0;
