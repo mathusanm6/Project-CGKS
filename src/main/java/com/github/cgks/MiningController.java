@@ -16,7 +16,7 @@ public class MiningController {
 
     @PostMapping
     public List<MiningResult> mine(@RequestBody MiningRequest request) {
-        MiningEngine engine = MiningSelector.chooseEngine(request); // On choisit ChocoMining ou SPMF
+        MiningEngine engine = new MiningEngine();
         return engine.runMining(request); // On exécute la requête
     }
 }
