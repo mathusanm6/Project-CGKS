@@ -11,10 +11,15 @@ import com.github.cgks.Miner;
 import com.github.cgks.MiningResult;
 import com.github.cgks.spmf.rpgrowth.AlgoRPGrowth;
 
+import ca.pfv.spmf.algorithms.frequentpatterns.apriori_rare.AlgoAprioriRare;
 import ca.pfv.spmf.algorithms.frequentpatterns.fpgrowth.AlgoFPMax;
 import ca.pfv.spmf.algorithms.frequentpatterns.lcm.AlgoLCM;
 import ca.pfv.spmf.algorithms.frequentpatterns.lcm.AlgoLCMFreq;
 import ca.pfv.spmf.algorithms.frequentpatterns.lcm.Dataset;
+import ca.pfv.spmf.algorithms.frequentpatterns.zart.AlgoZart;
+import ca.pfv.spmf.algorithms.frequentpatterns.zart.TZTableClosed;
+import ca.pfv.spmf.input.transaction_database_list_integers.TransactionDatabase;
+import ca.pfv.spmf.patterns.itemset_array_integers_with_count.Itemset;
 import ca.pfv.spmf.patterns.itemset_array_integers_with_count.Itemsets;
 
 // import ca.pfv.spmf.algorithms.frequentpatterns.fpgrowth.AlgoFPGrowth;
@@ -70,12 +75,36 @@ public class SpmfMiner implements Miner {
 
     @Override
     public List<MiningResult> extractGenerators(String datasetPath, Map<String, String> params) throws Exception {
-        return new ArrayList<>();
+		TransactionDatabase context = new TransactionDatabase();
+		context.loadFile(fileToPath(datasetPath));
+        Double minSupport = Double.parseDouble(params.get("minSupport"));
+		AlgoZart algo = new AlgoZart();		
+		TZTableClosed results = algo.runAlgorithm(context, minSupport);
+		Itemsets itemsets = new Itemsets("Generator itemset");
+		for(int i=0; i< results.levels.size(); i++){
+			for(Itemset closed : results.levels.get(i)){
+				List<Itemset> generators = results.mapGenerators.get(closed);
+				// if there are some generators
+				if(generators.size()!=0) { 
+					for(Itemset generator : generators){
+						itemsets.addItemset(generator, i);
+					}
+				}else {
+					// otherwise the closed itemset is a generator
+					itemsets.addItemset(closed, i);
+				}
+			}
+		}
+		return ConvertToMiningResult.convertItemsetsToMiningResults(itemsets);
     }
 
     @Override
     public List<MiningResult> extractMinimal(String datasetPath, Map<String, String> params) throws Exception {
-        return new ArrayList<>();
+		Double minSupport = Double.parseDouble(params.get("minSupport"));
+		//AlgoLCMMax algo = new AlgoLCMMax(); // Algo avec la version locale Non dispo
+		AlgoAprioriRare algo = new AlgoAprioriRare();
+		Itemsets itemsets = algo.runAlgorithm(minSupport, fileToPath(datasetPath), null);
+        return ConvertToMiningResult.convertItemsetsToMiningResults(itemsets);
     }
 
     @Override
