@@ -6,7 +6,6 @@ import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.IntStream;
 
 import org.chocosolver.solver.Model;
 import org.chocosolver.solver.Solver;
@@ -31,6 +30,7 @@ public class ChocoMiner implements Miner {
         BoolVar[] x = model.boolVarArray("x", database.getNbItems());
         int minSupport = (int) (database.getNbTransactions() * Double.parseDouble(params.get("minSupport")));
         IntVar freq = model.intVar("freq", minSupport, database.getNbTransactions());
+
         ConstraintFactory.coverSize(database, freq, x).post();
 
         Solver solver = model.getSolver();
@@ -54,6 +54,7 @@ public class ChocoMiner implements Miner {
         BoolVar[] x = model.boolVarArray("x", database.getNbItems());
         int minSupport = (int) (database.getNbTransactions() * Double.parseDouble(params.get("minSupport")));
         IntVar freq = model.intVar("freq", minSupport, database.getNbTransactions());
+
         ConstraintFactory.coverSize(database, freq, x).post();
         ConstraintFactory.coverClosure(database, x).post();
 
@@ -151,7 +152,7 @@ public class ChocoMiner implements Miner {
         Model model = new Model("Minimal Itemset Mining");
         BoolVar[] x = model.boolVarArray("x", database.getNbItems());
         int minSupport = (int) (database.getNbTransactions() * Double.parseDouble(params.get("minSupport")));
-        IntVar freq = model.intVar("freq", minSupport, database.getNbTransactions());
+        IntVar freq = model.intVar("freq", 1, minSupport - 1);
 
         ConstraintFactory.coverSize(database, freq, x).post();
         ConstraintFactory.coverClosure(database, x).post();
