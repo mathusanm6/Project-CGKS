@@ -55,17 +55,18 @@ export default function App() {
       case "rare":
         return (
           <>
-          <label>Support minimum :</label>
-          <input
-            type="number"
-            min="0"
-            max="1"
-            step="0.1"
-            name="minSupport"
-            placeholder="Support minimum (ex: 0.5)"
-            onChange={handleParamChange}
-            className="border p-2 w-full my-2"
-          />          </>
+            <label>Support minimum :</label>
+            <input
+              type="number"
+              min="0"
+              max="1"
+              step="0.1"
+              name="minSupport"
+              placeholder="Support minimum (ex: 0.5)"
+              onChange={handleParamChange}
+              className="border p-2 w-full my-2"
+            />
+          </>
         );
       case "size_between":
         return (
@@ -84,7 +85,7 @@ export default function App() {
             />
             <label>Taille minimale :</label>
             <input
-              type="number"            
+              type="number"
               name="minSize"
               placeholder="Taille min"
               onChange={handleParamChange}
@@ -104,14 +105,26 @@ export default function App() {
       case "absence":
         return (
           <>
-          <label>Items concernés :</label>
-          <input
-            type="text"
-            name="items"
-            placeholder="Items concernés (ex: 1,3,5)"
-            onChange={handleParamChange}
-            className="border p-2 w-full my-2"
-          />
+            <label>Support minimum :</label>
+            <input
+              type="number"
+              min="0"
+              max="1"
+              step="0.1"
+              name="minSupport"
+              placeholder="Support minimum (ex: 0.5)"
+              defaultValue={1}
+              onChange={handleParamChange}
+              className="border p-2 w-full my-2"
+            />
+            <label>Items concernés :</label>
+            <input
+              type="text"
+              name="items"
+              placeholder="Items concernés (ex: 1,3,5)"
+              onChange={handleParamChange}
+              className="border p-2 w-full my-2"
+            />
           </>
         );
       default:

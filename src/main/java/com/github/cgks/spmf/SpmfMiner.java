@@ -4,8 +4,11 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.github.cgks.Miner;
 import com.github.cgks.MiningResult;
@@ -140,11 +143,83 @@ public class SpmfMiner implements Miner {
 
     @Override
     public List<MiningResult> extractPresence(String datasetPath, Map<String, String> params) throws Exception {
-        return new ArrayList<>();
-    }
+        Double minSupport = Double.parseDouble(params.get("minSupport"));
+        String param = params.get("items"); 
+        List<Integer> requiredItems = Arrays.stream(param.split(","))
+                                            .map(String::trim)
+                                            .map(Integer::parseInt)
+                                            .collect(Collectors.toList());
+        Dataset dataset = pathToDataset(datasetPath);
+        AlgoLCM algo = new AlgoLCM();
+		Itemsets itemsets = algo.runAlgorithm(minSupport, dataset, null);
+		Itemsets results = new Itemsets("Itemsets contenant tous: " + requiredItems);
+
+		// Cas spécial: si aucun item requis, on retourne tout
+		if (requiredItems == null || requiredItems.isEmpty()) {
+			return  ConvertToMiningResult.convertItemsetsToMiningResults(itemsets);
+		}
+
+		// Tri des items requis pour la recherche binaire
+		List<Integer> sortedRequired = new ArrayList<>(requiredItems);
+		Collections.sort(sortedRequired);
+		
+
+		// Parcours optimisé avec stream
+		itemsets.getLevels().forEach(level -> 
+			level.stream()
+				.filter(itemset -> containsAllRequired(itemset, sortedRequired))
+				.forEach(itemset -> results.addItemset(itemset, itemset.size()))
+		);
+
+		return ConvertToMiningResult.convertItemsetsToMiningResults(results);
+	}
 
     @Override
     public List<MiningResult> extractAbsence(String datasetPath, Map<String, String> params) throws Exception {
-        return new ArrayList<>();
+        Double minSupport = Double.parseDouble(params.get("minSupport"));
+        String param = params.get("items"); 
+        List<Integer> excludedItems = Arrays.stream(param.split(","))
+                                            .map(String::trim)
+                                            .map(Integer::parseInt)
+                                            .collect(Collectors.toList());
+        Dataset dataset = pathToDataset(datasetPath);
+        AlgoLCM algo = new AlgoLCM();
+		Itemsets itemsets = algo.runAlgorithm(minSupport, dataset, null);
+		
+		Itemsets results = new Itemsets("Itemsets sans: " + excludedItems);
+		
+		if (excludedItems == null || excludedItems.isEmpty()) {
+		    return ConvertToMiningResult.convertItemsetsToMiningResults(itemsets);
+		}
+
+		List<Integer> sortedExcluded = new ArrayList<>(excludedItems);
+		Collections.sort(sortedExcluded);
+		
+
+		itemsets.getLevels().forEach(level ->
+			level.stream()
+				.filter(itemset -> !containsAny(itemset.getItems(), sortedExcluded))
+				.forEach(itemset -> results.addItemset(itemset, itemset.size()))
+		);
+
+		return ConvertToMiningResult.convertItemsetsToMiningResults(results);
     }
+
+    /**
+	 * Vérifie si un itemset contient tous les items requis (version optimisée List<Integer>)
+	 */
+	private static boolean containsAllRequired(Itemset itemset, List<Integer> requiredItems) {
+		List<Integer> itemsetItems = Arrays.stream(itemset.getItems())
+										.boxed()
+										.collect(Collectors.toList());
+		return itemsetItems.containsAll(requiredItems);
+	}
+    
+    /**
+	 * Vérifie si un tableau contient au moins un item interdit (version optimisée List<Integer>)
+	 */
+    private static boolean containsAny(int[] items, List<Integer> excludedItems) {
+		return Arrays.stream(items)
+					.anyMatch(item -> Collections.binarySearch(excludedItems, item) >= 0);
+	}
 }
