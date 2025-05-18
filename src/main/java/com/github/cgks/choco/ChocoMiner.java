@@ -6,8 +6,8 @@ import java.net.URLDecoder;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;<<<<<<<HEAD
-import java.util.logging.Logger;=======>>>>>>>2372880(fix:missing minSupport)
+import java.util.Map;
+import java.util.logging.Logger;
 
 import org.chocosolver.solver.Model;
 import org.chocosolver.solver.Solver;
