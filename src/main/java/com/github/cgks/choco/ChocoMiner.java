@@ -150,8 +150,7 @@ public class ChocoMiner implements Miner {
 
         Model model = new Model("Minimal Itemset Mining");
         BoolVar[] x = model.boolVarArray("x", database.getNbItems());
-        int minSupport = (int) (database.getNbTransactions() * Double.parseDouble(params.get("minSupport")));
-        IntVar freq = model.intVar("freq", minSupport, database.getNbTransactions());
+        IntVar freq = model.intVar("freq", 1, database.getNbTransactions());
 
         ConstraintFactory.coverSize(database, freq, x).post();
         ConstraintFactory.coverClosure(database, x).post();
@@ -207,9 +206,7 @@ public class ChocoMiner implements Miner {
         // Read the transactional database
         TransactionalDatabase database = readTransactionalDatabase(datasetPath);
 
-        int[] presence = IntStream.range(0, database.getNbItems())
-                .map(i -> Integer.parseInt(params.get("presence_" + i)))
-                .toArray();
+        int[] presence = parseArrayParameter(params.get("presence"), database.getNbItems());
 
         Model model = new Model("Closed Itemset Mining with Presence");
         BoolVar[] x = model.boolVarArray("x", database.getNbItems());
@@ -218,7 +215,7 @@ public class ChocoMiner implements Miner {
         // Constraining the presence of items
         for (int i = 0; i < presence.length; i++) {
             if (presence[i] == 1) {
-                x[i].eq(presence[i]).post();
+                x[i].eq(1).post();
             }
         }
 
@@ -243,9 +240,7 @@ public class ChocoMiner implements Miner {
         // Read the transactional database
         TransactionalDatabase database = readTransactionalDatabase(datasetPath);
 
-        int[] absence = IntStream.range(0, database.getNbItems())
-                .map(i -> Integer.parseInt(params.get("absence_" + i)))
-                .toArray();
+        int[] absence = parseArrayParameter(params.get("absence"), database.getNbItems());
 
         Model model = new Model("Closed Itemset Mining with Absence");
         BoolVar[] x = model.boolVarArray("x", database.getNbItems());
@@ -254,7 +249,7 @@ public class ChocoMiner implements Miner {
         // Constraining the absence of items
         for (int i = 0; i < absence.length; i++) {
             if (absence[i] == 1) {
-                x[i].eq(1 - absence[i]).post();
+                x[i].eq(0).post();
             }
         }
 
@@ -278,6 +273,20 @@ public class ChocoMiner implements Miner {
         URL url = ChocoMiner.class.getResource(datasetPath);
         String path = URLDecoder.decode(url.getPath(), "UTF-8");
         return new DatReader(path).read();
+    }
+
+    private int[] parseArrayParameter(String param, int nbItems) {
+        int[] array = new int[nbItems];
+        if (param != null && !param.isEmpty()) {
+            String[] indices = param.split(",");
+            for (String idxStr : indices) {
+                int idx = Integer.parseInt(idxStr.trim()) - 1; // Convert to 0-based index
+                if (idx >= 0 && idx < array.length) {
+                    array[idx] = 1;
+                }
+            }
+        }
+        return array;
     }
 
     private MiningResult getMiningResult(TransactionalDatabase database, BoolVar[] x, IntVar freq) {
