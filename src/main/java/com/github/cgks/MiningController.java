@@ -20,7 +20,7 @@ public class MiningController {
         try {
             return engine.runMining(request);
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Error during mining: " + e.getMessage());
             return List.of();
         }
     }
