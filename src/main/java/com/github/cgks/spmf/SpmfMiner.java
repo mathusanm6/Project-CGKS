@@ -25,10 +25,40 @@ import ca.pfv.spmf.input.transaction_database_list_integers.TransactionDatabase;
 import ca.pfv.spmf.patterns.itemset_array_integers_with_count.Itemset;
 import ca.pfv.spmf.patterns.itemset_array_integers_with_count.Itemsets;
 
-// import ca.pfv.spmf.algorithms.frequentpatterns.fpgrowth.AlgoFPGrowth;
-
+/**
+ * The {@code SpmfMiner} class implements the {@link Miner} interface and provides
+ * various methods for mining itemsets from datasets using algorithms from the SPMF library.
+ * <p>
+ * Supported mining tasks include:
+ * <ul>
+ *     <li>Frequent itemset mining</li>
+ *     <li>Closed itemset mining</li>
+ *     <li>Maximal itemset mining</li>
+ *     <li>Rare itemset mining</li>
+ *     <li>Generator itemset mining</li>
+ *     <li>Minimal itemset mining</li>
+ *     <li>Mining itemsets of specific size ranges</li>
+ *     <li>Mining itemsets containing or excluding specific items</li>
+ * </ul>
+ * <p>
+ * The class provides utility methods for converting file paths to datasets and
+ * for filtering itemsets based on presence or absence of items.
+ * <p>
+ * Each mining method expects a dataset path and a map of parameters, typically including
+ * minimum support and, for some methods, item constraints or size constraints.
+ * <p>
+ * Example usage:
+ * <pre>
+ *     SpmfMiner miner = new SpmfMiner();
+ *     Map&lt;String, String&gt; params = new HashMap&lt;&gt;();
+ *     params.put("minSupport", "0.5");
+ *     List&lt;MiningResult&gt; results = miner.extractFrequent("dataset.txt", params);
+ * </pre>
+ *
+ * @author  CGKS team
+ * @version 1.0
+ */
 public class SpmfMiner implements Miner {
-    // TODO(unknown): Implement this class to use SPMF for mining patterns.
 
     public static String fileToPath(String file) throws UnsupportedEncodingException{
 		URL url = TestSPMF.class.getResource(file);
@@ -214,7 +244,7 @@ public class SpmfMiner implements Miner {
 										.collect(Collectors.toList());
 		return itemsetItems.containsAll(requiredItems);
 	}
-    
+
     /**
 	 * Vérifie si un tableau contient au moins un item interdit (version optimisée List<Integer>)
 	 */
