@@ -41,6 +41,14 @@
             <version>5.9.2</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- Jep for running prediction model from python -->
+        <dependency>
+            <groupId>black.ninia</groupId>
+            <artifactId>jep</artifactId>
+            <version>4.1.1</version>
+        </dependency>
+
     </dependencies>
 
     <build>
