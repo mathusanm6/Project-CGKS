@@ -385,13 +385,13 @@ public class ChocoMiner implements Miner {
     @Override
     public List<MiningResult> extractPresence(String datasetPath, Map<String, String> params) throws MiningException {
         try {
-            validateParams(params, "presence", "minSupport");
+            validateParams(params, "items", "minSupport");
 
             // Read the transactional database
             TransactionalDatabase database = readTransactionalDatabase(datasetPath);
             int minSupport = parseMinSupport(params, database);
 
-            int[] presence = parseArrayParameter(params.get("presence"), database.getNbItems());
+            int[] presence = parseArrayParameter(params.get("items"), database.getNbItems());
 
             LOGGER.info("Starting closed itemset mining with presence constraints and minSupport: " + minSupport);
 
@@ -434,13 +434,13 @@ public class ChocoMiner implements Miner {
     @Override
     public List<MiningResult> extractAbsence(String datasetPath, Map<String, String> params) throws MiningException {
         try {
-            validateParams(params, "absence", "minSupport");
+            validateParams(params, "items", "minSupport");
 
             // Read the transactional database
             TransactionalDatabase database = readTransactionalDatabase(datasetPath);
             int minSupport = parseMinSupport(params, database);
 
-            int[] absence = parseArrayParameter(params.get("absence"), database.getNbItems());
+            int[] absence = parseArrayParameter(params.get("items"), database.getNbItems());
 
             LOGGER.info("Starting closed itemset mining with absence constraints and minSupport: " + minSupport);
 
