@@ -3,15 +3,13 @@ package com.github.cgks.spmf;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
-//import java.io.BufferedReader;
-//import java.io.FileReader;
-//import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import com.github.cgks.Miner;
 import com.github.cgks.MiningResult;
+import com.github.cgks.spmf.rpgrowth.AlgoRPGrowth;
 
 import ca.pfv.spmf.algorithms.frequentpatterns.fpgrowth.AlgoFPMax;
 import ca.pfv.spmf.algorithms.frequentpatterns.lcm.AlgoLCM;
@@ -55,9 +53,8 @@ public class SpmfMiner implements Miner {
 
     @Override
     public List<MiningResult> extractMaximal(String datasetPath, Map<String, String> params) throws Exception {
-        //Dataset dataset = pathToDataset(datasetPath);
         Double minSupport = Double.parseDouble(params.get("minSupport"));
-		//AlgoLCMMax algo = new AlgoLCMMax(); // Algo avec la version locale Non dispo
+		// AlgoLCMMax algo = new AlgoLCMMax(); // Algo avec la version locale Non dispo
 		AlgoFPMax algo = new AlgoFPMax();
 		Itemsets itemsets = algo.runAlgorithm(fileToPath(datasetPath), null, minSupport);
 		return ConvertToMiningResult.convertItemsetsToMiningResults(itemsets);
@@ -65,7 +62,10 @@ public class SpmfMiner implements Miner {
 
     @Override
     public List<MiningResult> extractRare(String datasetPath, Map<String, String> params) throws Exception {
-        return new ArrayList<>();
+        Double minSupport = Double.parseDouble(params.get("minSupport"));
+		AlgoRPGrowth algo = new AlgoRPGrowth(); // Introuvable
+		Itemsets itemsets = algo.runAlgorithm(fileToPath(datasetPath), null, minSupport, 0);
+		return ConvertToMiningResult.convertItemsetsToMiningResults(itemsets);
     }
 
     @Override
