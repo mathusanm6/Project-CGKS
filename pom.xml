@@ -37,18 +37,35 @@
         <!-- JUnit for testing -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.9.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
             <version>5.9.2</version>
             <scope>test</scope>
         </dependency>
-
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>5.9.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+            <version>5.9.2</version>
+            <scope>test</scope>
+        </dependency>
+        
         <!-- Jep for running prediction model from python -->
         <dependency>
             <groupId>black.ninia</groupId>
             <artifactId>jep</artifactId>
             <version>4.1.1</version>
         </dependency>
-
     </dependencies>
 
     <build>
@@ -76,6 +93,11 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.0.0-M7</version>
+                <configuration>
+                    <includes>
+                        <include>**/*Test.java</include>
+                    </includes>
+                </configuration>
             </plugin>
         </plugins>
 

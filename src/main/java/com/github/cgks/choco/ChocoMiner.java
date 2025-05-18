@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import org.chocosolver.solver.Model;
 import org.chocosolver.solver.Solver;
@@ -97,6 +98,10 @@ public class ChocoMiner implements Miner {
             }
 
             LOGGER.info("Frequent itemset mining completed. Found " + results.size() + " results.");
+
+            // Empty itemsets are not allowed
+            results = filterOutEmptyItemsets(results);
+
             return results;
         } catch (ParameterException | DatabaseException e) {
             throw e;
@@ -137,6 +142,10 @@ public class ChocoMiner implements Miner {
             }
 
             LOGGER.info("Closed itemset mining completed. Found " + results.size() + " results.");
+
+            // Empty itemsets are not allowed
+            results = filterOutEmptyItemsets(results);
+
             return results;
         } catch (ParameterException | DatabaseException e) {
             throw e;
@@ -177,6 +186,10 @@ public class ChocoMiner implements Miner {
             }
 
             LOGGER.info("Maximal itemset mining completed. Found " + results.size() + " results.");
+
+            // Empty itemsets are not allowed
+            results = filterOutEmptyItemsets(results);
+
             return results;
         } catch (ParameterException | DatabaseException e) {
             throw e;
@@ -221,6 +234,10 @@ public class ChocoMiner implements Miner {
             }
 
             LOGGER.info("Rare itemset mining completed. Found " + results.size() + " results.");
+
+            // Empty itemsets are not allowed
+            results = filterOutEmptyItemsets(results);
+
             return results;
         } catch (ParameterException | DatabaseException e) {
             throw e;
@@ -261,6 +278,10 @@ public class ChocoMiner implements Miner {
             }
 
             LOGGER.info("Generators mining completed. Found " + results.size() + " results.");
+
+            // Empty itemsets are not allowed
+            results = filterOutEmptyItemsets(results);
+
             return results;
         } catch (ParameterException | DatabaseException e) {
             throw e;
@@ -306,6 +327,10 @@ public class ChocoMiner implements Miner {
             }
 
             LOGGER.info("Minimal itemset mining completed. Found " + results.size() + " results.");
+
+            // Empty itemsets are not allowed
+            results = filterOutEmptyItemsets(results);
+
             return results;
         } catch (ParameterException | DatabaseException e) {
             throw e;
@@ -374,6 +399,10 @@ public class ChocoMiner implements Miner {
             }
 
             LOGGER.info("Size between itemset mining completed. Found " + results.size() + " results.");
+
+            // Empty itemsets are not allowed
+            results = filterOutEmptyItemsets(results);
+
             return results;
         } catch (ParameterException | DatabaseException e) {
             throw e;
@@ -423,6 +452,10 @@ public class ChocoMiner implements Miner {
             }
 
             LOGGER.info("Presence constrained mining completed. Found " + results.size() + " results.");
+
+            // Empty itemsets are not allowed
+            results = filterOutEmptyItemsets(results);
+
             return results;
         } catch (ParameterException | DatabaseException e) {
             throw e;
@@ -472,6 +505,10 @@ public class ChocoMiner implements Miner {
             }
 
             LOGGER.info("Absence constrained mining completed. Found " + results.size() + " results.");
+
+            // Empty itemsets are not allowed
+            results = filterOutEmptyItemsets(results);
+            
             return results;
         } catch (ParameterException | DatabaseException e) {
             throw e;
@@ -567,5 +604,17 @@ public class ChocoMiner implements Miner {
             }
         }
         return new MiningResult(itemset, freq.getValue());
+    }
+
+    /**
+     * Filters out empty itemsets from the results.
+     *
+     * @param results The list of mining results
+     * @return The filtered list of mining results
+     */
+    private List<MiningResult> filterOutEmptyItemsets(List<MiningResult> results) {
+        return results.stream()
+                .filter(result -> !result.getPattern().isEmpty())
+                .collect(Collectors.toList());
     }
 }

@@ -1,5 +1,0 @@
-package com.github.cgks;
-
-public class MainClassTest {
-    
-}
