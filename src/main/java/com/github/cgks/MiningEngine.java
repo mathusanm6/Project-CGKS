@@ -24,7 +24,7 @@ public class MiningEngine {
                 return miner.extractGenerators(datasetPath, params);
             case "minimal":
                 return miner.extractMinimal(datasetPath, params);
-            case "sizeBetween":
+            case "size_between":
                 return miner.extractSizeBetween(datasetPath, params);
             case "presence":
                 return miner.extractPresence(datasetPath, params);

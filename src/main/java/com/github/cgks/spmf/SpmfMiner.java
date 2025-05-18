@@ -109,7 +109,33 @@ public class SpmfMiner implements Miner {
 
     @Override
     public List<MiningResult> extractSizeBetween(String datasetPath, Map<String, String> params) throws Exception {
-        return new ArrayList<>();
+        Dataset dataset = pathToDataset(datasetPath);
+        int minSize = Integer.parseInt(params.get("minSize"));
+        int maxSize = Integer.parseInt(params.get("maxSize"));
+        Double minSupport = Double.parseDouble(params.get("minSupport"));
+        AlgoLCM algo = new AlgoLCM();
+		Itemsets itemsets = algo.runAlgorithm(minSupport, dataset, null);
+		
+		Itemsets results = new Itemsets( 
+			String.format("Itemsets de taille %d à %d", minSize, maxSize)
+		);
+		
+		// Validation des paramètres
+		if (minSize < 0 || maxSize < minSize) {
+			throw new IllegalArgumentException("Tailles invalides");
+		}
+
+
+		for (List<Itemset> level : itemsets.getLevels()) {
+			for (Itemset itemset : level) {
+				int size = itemset.size();
+				if (size >= minSize && size <= maxSize) {
+					results.addItemset(itemset, size);
+				}
+            }
+		}
+
+		return ConvertToMiningResult.convertItemsetsToMiningResults(results);
     }
 
     @Override

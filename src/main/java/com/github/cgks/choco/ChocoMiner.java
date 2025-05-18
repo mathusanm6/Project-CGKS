@@ -176,10 +176,12 @@ public class ChocoMiner implements Miner {
 
         int minSize = Integer.parseInt(params.get("minSize"));
         int maxSize = Integer.parseInt(params.get("maxSize"));
+        int minSupport = (int) (database.getNbTransactions() * Double.parseDouble(params.get("minSupport")));
+
 
         Model model = new Model("Size Between Itemset Mining");
         BoolVar[] x = model.boolVarArray("x", database.getNbItems());
-        IntVar freq = model.intVar("freq", 1, database.getNbTransactions());
+        IntVar freq = model.intVar("freq", minSupport, database.getNbTransactions());
 
         // Limiting the size of the itemsets
         model.sum(x, ">=", minSize).post();
