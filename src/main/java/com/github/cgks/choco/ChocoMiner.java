@@ -150,7 +150,8 @@ public class ChocoMiner implements Miner {
 
         Model model = new Model("Minimal Itemset Mining");
         BoolVar[] x = model.boolVarArray("x", database.getNbItems());
-        IntVar freq = model.intVar("freq", 1, database.getNbTransactions());
+        int minSupport = (int) (database.getNbTransactions() * Double.parseDouble(params.get("minSupport")));
+        IntVar freq = model.intVar("freq", minSupport, database.getNbTransactions());
 
         ConstraintFactory.coverSize(database, freq, x).post();
         ConstraintFactory.coverClosure(database, x).post();
@@ -179,7 +180,8 @@ public class ChocoMiner implements Miner {
 
         Model model = new Model("Size Between Itemset Mining");
         BoolVar[] x = model.boolVarArray("x", database.getNbItems());
-        IntVar freq = model.intVar("freq", 1, database.getNbTransactions());
+        int minSupport = (int) (database.getNbTransactions() * Double.parseDouble(params.get("minSupport")));
+        IntVar freq = model.intVar("freq", minSupport, database.getNbTransactions());
 
         // Limiting the size of the itemsets
         model.sum(x, ">=", minSize).post();
@@ -210,7 +212,8 @@ public class ChocoMiner implements Miner {
 
         Model model = new Model("Closed Itemset Mining with Presence");
         BoolVar[] x = model.boolVarArray("x", database.getNbItems());
-        IntVar freq = model.intVar("freq", 1, database.getNbTransactions());
+        int minSupport = (int) (database.getNbTransactions() * Double.parseDouble(params.get("minSupport")));
+        IntVar freq = model.intVar("freq", minSupport, database.getNbTransactions());
 
         // Constraining the presence of items
         for (int i = 0; i < presence.length; i++) {
@@ -244,7 +247,8 @@ public class ChocoMiner implements Miner {
 
         Model model = new Model("Closed Itemset Mining with Absence");
         BoolVar[] x = model.boolVarArray("x", database.getNbItems());
-        IntVar freq = model.intVar("freq", 1, database.getNbTransactions());
+        int minSupport = (int) (database.getNbTransactions() * Double.parseDouble(params.get("minSupport")));
+        IntVar freq = model.intVar("freq", minSupport, database.getNbTransactions());
 
         // Constraining the absence of items
         for (int i = 0; i < absence.length; i++) {
