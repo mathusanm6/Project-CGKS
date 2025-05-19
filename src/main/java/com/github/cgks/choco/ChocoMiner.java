@@ -34,8 +34,8 @@ public class ChocoMiner implements Miner {
 
     /**
      * Validates that required parameters are present.
+     * * @param params The parameters map
      * 
-     * @param params         The parameters map
      * @param requiredParams The required parameter names
      * @throws ParameterException If a required parameter is missing
      */
@@ -104,7 +104,7 @@ public class ChocoMiner implements Miner {
 
             return results;
         } catch (ParameterException | DatabaseException e) {
-            throw e;
+            throw e; // Re-throw specific exceptions
         } catch (Exception e) {
             throw new MiningException("Unexpected error in extractFrequent: " + e.getMessage(), e);
         }
@@ -148,7 +148,7 @@ public class ChocoMiner implements Miner {
 
             return results;
         } catch (ParameterException | DatabaseException e) {
-            throw e;
+            throw e; // Re-throw specific exceptions
         } catch (Exception e) {
             throw new MiningException("Unexpected error in extractClosed: " + e.getMessage(), e);
         }
@@ -192,7 +192,7 @@ public class ChocoMiner implements Miner {
 
             return results;
         } catch (ParameterException | DatabaseException e) {
-            throw e;
+            throw e; // Re-throw specific exceptions
         } catch (Exception e) {
             throw new MiningException("Unexpected error in extractMaximal: " + e.getMessage(), e);
         }
@@ -240,7 +240,7 @@ public class ChocoMiner implements Miner {
 
             return results;
         } catch (ParameterException | DatabaseException e) {
-            throw e;
+            throw e; // Re-throw specific exceptions
         } catch (Exception e) {
             throw new MiningException("Unexpected error in extractRare: " + e.getMessage(), e);
         }
@@ -284,7 +284,7 @@ public class ChocoMiner implements Miner {
 
             return results;
         } catch (ParameterException | DatabaseException e) {
-            throw e;
+            throw e; // Re-throw specific exceptions
         } catch (Exception e) {
             throw new MiningException("Unexpected error in extractGenerators: " + e.getMessage(), e);
         }
@@ -333,7 +333,7 @@ public class ChocoMiner implements Miner {
 
             return results;
         } catch (ParameterException | DatabaseException e) {
-            throw e;
+            throw e; // Re-throw specific exceptions
         } catch (Exception e) {
             throw new MiningException("Unexpected error in extractMinimal: " + e.getMessage(), e);
         }
@@ -405,7 +405,7 @@ public class ChocoMiner implements Miner {
 
             return results;
         } catch (ParameterException | DatabaseException e) {
-            throw e;
+            throw e; // Re-throw specific exceptions
         } catch (Exception e) {
             throw new MiningException("Unexpected error in extractSizeBetween: " + e.getMessage(), e);
         }
@@ -458,7 +458,7 @@ public class ChocoMiner implements Miner {
 
             return results;
         } catch (ParameterException | DatabaseException e) {
-            throw e;
+            throw e; // Re-throw specific exceptions
         } catch (Exception e) {
             throw new MiningException("Unexpected error in extractPresence: " + e.getMessage(), e);
         }
@@ -508,10 +508,10 @@ public class ChocoMiner implements Miner {
 
             // Empty itemsets are not allowed
             results = filterOutEmptyItemsets(results);
-            
+
             return results;
         } catch (ParameterException | DatabaseException e) {
-            throw e;
+            throw e; // Re-throw specific exceptions
         } catch (Exception e) {
             throw new MiningException("Unexpected error in extractAbsence: " + e.getMessage(), e);
         }
@@ -563,8 +563,8 @@ public class ChocoMiner implements Miner {
 
     /**
      * Parse array parameters from a comma-separated string.
+     * * @param param The parameter string (comma-separated indices)
      * 
-     * @param param   The parameter string (comma-separated indices)
      * @param nbItems The number of items in the database
      * @return An array where selected indices are set to 1
      */
