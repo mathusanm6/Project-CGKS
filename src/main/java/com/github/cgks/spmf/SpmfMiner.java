@@ -53,9 +53,9 @@ import ca.pfv.spmf.patterns.itemset_array_integers_with_count.Itemsets;
  * Example usage:
  * <pre>
  *     SpmfMiner miner = new SpmfMiner();
- *     Map&lt;String, String&gt; params = new HashMap&lt;&gt;();
+ *     Map<String, String>; params = new HashMap<>();
  *     params.put("minSupport", "0.5");
- *     List&lt;MiningResult&gt; results = miner.extractFrequent("dataset.txt", params);
+ *     List<MiningResult> results = miner.extractFrequent("dataset.txt", params);
  * </pre>
  *
  * @author  CGKS team
@@ -65,82 +65,6 @@ public class SpmfMiner implements Miner {
 
     private static final Logger LOGGER = Logger.getLogger(SpmfMiner.class.getName());
 
-
-    private static String fileToPath(String file) throws DatabaseException{
-        try {
-            URL url = TestSPMF.class.getResource(file);
-            return java.net.URLDecoder.decode(url.getPath(),"UTF-8");
-        } catch (Exception e) {
-            throw new DatabaseException("Error loading dataset: " + e.getMessage(), e);
-        }
-	}
-
-    private static Dataset pathToDataset(String path) throws DatabaseException{
-        try {    
-            String input = fileToPath(path); 
-            Dataset dataset = new Dataset(input);
-            return dataset;
-        } catch (Exception e) {
-            throw new DatabaseException("Error loading dataset: " + e.getMessage(), e);
-        }
-    }
-
-    private static TransactionDatabase readTransactionDatabase(String datasetPath) throws DatabaseException {
-        try {
-            TransactionDatabase context = new TransactionDatabase();
-		    context.loadFile(fileToPath(datasetPath));
-            return context;
-        } catch (IOException e) {
-            throw new DatabaseException("Error loading dataset: " + e.getMessage(), e);
-        }
-    }
-
-
-    /**
-     * Validates that required parameters are present.
-     * * @param params The parameters map
-     * 
-     * @param requiredParams The required parameter names
-     * @throws ParameterException If a required parameter is missing
-     */
-    private void validateParams(Map<String, String> params, String... requiredParams) throws ParameterException {
-        for (String param : requiredParams) {
-            if (!params.containsKey(param) || params.get(param) == null || params.get(param).trim().isEmpty()) {
-                throw new ParameterException("Required parameter '" + param + "' is missing or empty");
-            }
-        }
-    }
-
-    /**
-     * Validates and parses the minimum support parameter.
-     *
-     * @param params   The parameters map
-     * @param database The transactional database
-     * @return The calculated minimum support value
-     * @throws ParameterException If the minSupport parameter is invalid
-     */
-    private Double parseMinSupport(Map<String, String> params) throws ParameterException {
-        try {
-            Double minSupportRatio = Double.parseDouble(params.get("minSupport"));
-            if (minSupportRatio <= 0.0 || minSupportRatio > 1.0) {
-                throw new ParameterException("minSupport must be between 0.0 (exclusive) and 1.0 (inclusive)");
-            }
-            return minSupportRatio ;
-        } catch (NumberFormatException e) {
-            throw new ParameterException("Invalid minSupport value: " + params.get("minSupport"));
-        }
-    }
-
-    private List<Integer> parseItems(String param) throws ParameterException {
-        try {
-            return Arrays.stream(param.split(","))
-                                      .map(String::trim)
-                                      .map(Integer::parseInt)
-                                      .collect(Collectors.toList());
-        } catch (NumberFormatException e) {
-            throw new ParameterException("Invalid items parameter: " + param);
-        }
-    }
 
     @Override
     public List<MiningResult> extractFrequent(String datasetPath, Map<String, String> params) throws MiningException{
@@ -393,4 +317,89 @@ public class SpmfMiner implements Miner {
 		return Arrays.stream(items)
 					.anyMatch(item -> Collections.binarySearch(excludedItems, item) >= 0);
 	}
+
+
+    private static String fileToPath(String file) throws DatabaseException{
+        try {
+            URL url = TestSPMF.class.getResource(file);
+            return java.net.URLDecoder.decode(url.getPath(),"UTF-8");
+        } catch (Exception e) {
+            throw new DatabaseException("Error loading dataset: " + e.getMessage(), e);
+        }
+	}
+
+    private static Dataset pathToDataset(String path) throws DatabaseException{
+        try {    
+            String input = fileToPath(path); 
+            Dataset dataset = new Dataset(input);
+            return dataset;
+        } catch (Exception e) {
+            throw new DatabaseException("Error loading dataset: " + e.getMessage(), e);
+        }
+    }
+
+    private static TransactionDatabase readTransactionDatabase(String datasetPath) throws DatabaseException {
+        try {
+            TransactionDatabase context = new TransactionDatabase();
+		    context.loadFile(fileToPath(datasetPath));
+            return context;
+        } catch (IOException e) {
+            throw new DatabaseException("Error loading dataset: " + e.getMessage(), e);
+        }
+    }
+
+
+    /**
+     * Validates that required parameters are present.
+     * * @param params The parameters map
+     * 
+     * @param requiredParams The required parameter names
+     * @throws ParameterException If a required parameter is missing
+     */
+    private void validateParams(Map<String, String> params, String... requiredParams) throws ParameterException {
+        for (String param : requiredParams) {
+            if (!params.containsKey(param) || params.get(param) == null || params.get(param).trim().isEmpty()) {
+                throw new ParameterException("Required parameter '" + param + "' is missing or empty");
+            }
+        }
+    }
+
+    /**
+     * Validates and parses the minimum support parameter.
+     *
+     * @param params   The parameters map
+     * @param database The transactional database
+     * @return The calculated minimum support value
+     * @throws ParameterException If the minSupport parameter is invalid
+     */
+    private Double parseMinSupport(Map<String, String> params) throws ParameterException {
+        try {
+            Double minSupportRatio = Double.parseDouble(params.get("minSupport"));
+            if (minSupportRatio <= 0.0 || minSupportRatio > 1.0) {
+                throw new ParameterException("minSupport must be between 0.0 (exclusive) and 1.0 (inclusive)");
+            }
+            return minSupportRatio ;
+        } catch (NumberFormatException e) {
+            throw new ParameterException("Invalid minSupport value: " + params.get("minSupport"));
+        }
+    }
+
+    /**
+     * Validates and parses the required/exculded items.
+     *
+     * @param param    The items parameter
+     * @return An array of integers representing the items
+     * @throws ParameterException If the items parameter is invalid
+     */
+    private List<Integer> parseItems(String param) throws ParameterException {
+        try {
+            return Arrays.stream(param.split(","))
+                                      .map(String::trim)
+                                      .map(Integer::parseInt)
+                                      .collect(Collectors.toList());
+        } catch (NumberFormatException e) {
+            throw new ParameterException("Invalid items parameter: " + param);
+        }
+    }
+    
 }
