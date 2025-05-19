@@ -49,18 +49,39 @@ export default function App() {
       case "frequent":
       case "closed":
       case "maximal":
+      case "rare":
+      case "generators":
         return (
-          <input
-            type="number"
-            name="minSupport"
-            placeholder="Support minimum (%)"
-            onChange={handleParamChange}
-            className="border p-2 w-full my-2"
-          />
+          <>
+            <label>Support minimum :</label>
+            <input
+              type="number"
+              min="0"
+              max="1"
+              step="0.1"
+              name="minSupport"
+              placeholder="Support minimum (ex: 0.5)"
+              onChange={handleParamChange}
+              className="border p-2 w-full my-2"
+            />
+          </>
         );
       case "size_between":
         return (
           <>
+            <label>Support minimum :</label>
+            <input
+              type="number"
+              min="0"
+              max="1"
+              step="0.1"
+              name="minSupport"
+              placeholder="Support minimum (ex: 0.5)"
+              defaultValue={1}
+              onChange={handleParamChange}
+              className="border p-2 w-full my-2"
+            />
+            <label>Taille minimale :</label>
             <input
               type="number"
               name="minSize"
@@ -68,6 +89,7 @@ export default function App() {
               onChange={handleParamChange}
               className="border p-2 w-full my-2"
             />
+            <label>Taille maximale :</label>
             <input
               type="number"
               name="maxSize"
@@ -80,13 +102,28 @@ export default function App() {
       case "presence":
       case "absence":
         return (
-          <input
-            type="text"
-            name="items"
-            placeholder="Items concernés (ex: 1,3,5)"
-            onChange={handleParamChange}
-            className="border p-2 w-full my-2"
-          />
+          <>
+            <label>Support minimum :</label>
+            <input
+              type="number"
+              min="0"
+              max="1"
+              step="0.1"
+              name="minSupport"
+              placeholder="Support minimum (ex: 0.5)"
+              defaultValue={1}
+              onChange={handleParamChange}
+              className="border p-2 w-full my-2"
+            />
+            <label>Items concernés :</label>
+            <input
+              type="text"
+              name="items"
+              placeholder="Items concernés (ex: 1,3,5)"
+              onChange={handleParamChange}
+              className="border p-2 w-full my-2"
+            />
+          </>
         );
       default:
         return null;
