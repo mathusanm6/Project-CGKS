@@ -1,7 +1,11 @@
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
+
 # Folder and file convention name
-DATA_FOLDER = "/Users/sushiatomique/Documents/CoursM1/ProjetApprentissage/projet-isd-cgks/src/main/resources/data"
-DATASETS_FOLDER = "datasets"
-SAVED_PIPELINE_FOLDER = "pipeline"
+DATA_FOLDER = "/data"
+DATASETS_FOLDER = BASE_DIR / "datasets"
+SAVED_PIPELINE_FOLDER = BASE_DIR / "pipeline"
 PLOT_FOLDER = "plot"
 
 # Pipeline convention name

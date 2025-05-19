@@ -110,9 +110,7 @@ def columns_preparation(df: pd.DataFrame, save: bool)-> Tuple[pd.DataFrame, pd.c
     if LABEL_NAME in categorical_features:
         categorical_features.remove(LABEL_NAME)
     if LABEL_NAME in numeric_features:
-        categorical_features.remove(LABEL_NAME)
-
-
+        numeric_features.remove(LABEL_NAME)
 
     # Prepare features and target
     X = df.drop(LABEL_NAME, axis=1)
