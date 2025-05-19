@@ -8,6 +8,7 @@ const ResultsTable = ({
   isLoading, 
   clearResultsAndAlert
 }) => {
+  const maxFreq = Math.max(...results.map(item => item.freq));
   return (
     <div className="card">
       <div className="results-header">
@@ -101,11 +102,14 @@ const ResultsTable = ({
                       className="table-cell"
                       style={{ textAlign: "right" }}
                     >
-                      {r.freq.toFixed(3)}
+                      {r.freq}
                       <div className="progress-container">
                         <div
                           className="progress-bar"
-                          style={{ width: `${r.freq * 100}%` }}
+                          style={{ 
+                            width: `${r.freq / maxFreq * 100}%`,
+                            opacity: (r.freq / maxFreq)
+                          }}
                           aria-valuemin="0"
                           aria-valuemax="1"
                           aria-valuenow={r.freq}
