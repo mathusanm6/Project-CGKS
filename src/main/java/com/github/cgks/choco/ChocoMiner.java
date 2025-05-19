@@ -79,9 +79,10 @@ public class ChocoMiner implements Miner {
 
             Model model = new Model("Frequent Itemset Mining");
             BoolVar[] x = model.boolVarArray("x", database.getNbItems());
-            IntVar freq = model.intVar("freq", minSupport, database.getNbTransactions());
+            IntVar freq = model.intVar("freq", 1, database.getNbTransactions());
 
             // Post constraint
+            model.arithm(freq, ">=", minSupport).post();
             ConstraintFactory.coverSize(database, freq, x).post();
 
             Solver solver = model.getSolver();
@@ -122,9 +123,10 @@ public class ChocoMiner implements Miner {
 
             Model model = new Model("Closed Itemset Mining");
             BoolVar[] x = model.boolVarArray("x", database.getNbItems());
-            IntVar freq = model.intVar("freq", minSupport, database.getNbTransactions());
+            IntVar freq = model.intVar("freq", 1, database.getNbTransactions());
 
             // Post constraints
+            model.arithm(freq, ">=", minSupport).post();
             ConstraintFactory.coverSize(database, freq, x).post();
             ConstraintFactory.coverClosure(database, x).post();
 
@@ -166,9 +168,10 @@ public class ChocoMiner implements Miner {
 
             Model model = new Model("Maximal Itemset Mining");
             BoolVar[] x = model.boolVarArray("x", database.getNbItems());
-            IntVar freq = model.intVar("freq", minSupport, database.getNbTransactions());
+            IntVar freq = model.intVar("freq", 1, database.getNbTransactions());
 
             // Post constraints
+            model.arithm(freq, ">=", minSupport).post();
             ConstraintFactory.coverSize(database, freq, x).post();
             ConstraintFactory.infrequentSupers(database, minSupport, x).post();
 
@@ -215,9 +218,10 @@ public class ChocoMiner implements Miner {
 
             Model model = new Model("Rare Itemset Mining");
             BoolVar[] x = model.boolVarArray("x", database.getNbItems());
-            IntVar freq = model.intVar("freq", 1, minSupport - 1);
+            IntVar freq = model.intVar("freq", 1, database.getNbTransactions());
 
             // Post constraint
+            model.arithm(freq, "<", minSupport).post();
             ConstraintFactory.coverSize(database, freq, x).post();
 
             Solver solver = model.getSolver();
@@ -258,9 +262,10 @@ public class ChocoMiner implements Miner {
 
             Model model = new Model("Generators Mining");
             BoolVar[] x = model.boolVarArray("x", database.getNbItems());
-            IntVar freq = model.intVar("freq", minSupport, database.getNbTransactions());
+            IntVar freq = model.intVar("freq", 1, database.getNbTransactions());
 
             // Post constraints
+            model.arithm(freq, ">=", minSupport).post();
             ConstraintFactory.generator(database, x).post();
             ConstraintFactory.coverSize(database, freq, x).post();
 
@@ -307,11 +312,12 @@ public class ChocoMiner implements Miner {
 
             Model model = new Model("Minimal Itemset Mining");
             BoolVar[] x = model.boolVarArray("x", database.getNbItems());
-            IntVar freq = model.intVar("freq", 1, minSupport - 1);
+            IntVar freq = model.intVar("freq", 1, database.getNbTransactions());
 
             // Post constraints
+            model.arithm(freq, "<", minSupport).post();
             ConstraintFactory.coverSize(database, freq, x).post();
-            ConstraintFactory.coverClosure(database, x).post();
+            ConstraintFactory.frequentSubs(database, x).post();
 
             Solver solver = model.getSolver();
             List<MiningResult> results = new ArrayList<>();
@@ -375,12 +381,13 @@ public class ChocoMiner implements Miner {
 
             Model model = new Model("Size Between Itemset Mining");
             BoolVar[] x = model.boolVarArray("x", database.getNbItems());
-            IntVar freq = model.intVar("freq", minSupport, database.getNbTransactions());
+            IntVar freq = model.intVar("freq", 1, database.getNbTransactions());
 
             // Limiting the size of the itemsets
             model.sum(x, ">=", minSize).post();
             model.sum(x, "<=", maxSize).post();
-
+            model.arithm(freq, ">=", minSupport).post();
+            
             // Adding the constraints for closed itemsets
             ConstraintFactory.coverSize(database, freq, x).post();
             ConstraintFactory.coverClosure(database, x).post();
@@ -425,7 +432,7 @@ public class ChocoMiner implements Miner {
 
             Model model = new Model("Closed Itemset Mining with Presence");
             BoolVar[] x = model.boolVarArray("x", database.getNbItems());
-            IntVar freq = model.intVar("freq", minSupport, database.getNbTransactions());
+            IntVar freq = model.intVar("freq", 1, database.getNbTransactions());
 
             // Constraining the presence of items
             for (int i = 0; i < presence.length; i++) {
@@ -435,6 +442,7 @@ public class ChocoMiner implements Miner {
             }
 
             // Adding the constraints for closed itemsets
+            model.arithm(freq, ">=", minSupport).post();
             ConstraintFactory.coverSize(database, freq, x).post();
             ConstraintFactory.coverClosure(database, x).post();
 
@@ -478,7 +486,7 @@ public class ChocoMiner implements Miner {
 
             Model model = new Model("Closed Itemset Mining with Absence");
             BoolVar[] x = model.boolVarArray("x", database.getNbItems());
-            IntVar freq = model.intVar("freq", minSupport, database.getNbTransactions());
+            IntVar freq = model.intVar("freq", 1, database.getNbTransactions());
 
             // Constraining the absence of items
             for (int i = 0; i < absence.length; i++) {
@@ -488,6 +496,7 @@ public class ChocoMiner implements Miner {
             }
 
             // Adding the constraints for closed itemsets
+            model.arithm(freq, ">=", minSupport).post();
             ConstraintFactory.coverSize(database, freq, x).post();
             ConstraintFactory.coverClosure(database, x).post();
 
