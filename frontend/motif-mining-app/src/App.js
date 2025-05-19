@@ -1,5 +1,5 @@
-import React, { useState, useRef, useCallback } from "react";
-import { datasets, getDefaultParamsForQuery, queryTypes } from "./constants";
+import React, { useState, useRef, useCallback, useEffect } from "react";
+import { engines, datasets, getDefaultParamsForQuery, queryTypes } from "./constants";
 import Alert from "./components/ui/Alert";
 import DataForm from "./components/form/DataForm";
 import ResultsTable from "./components/results/ResultsTable";
@@ -14,6 +14,7 @@ import "./index.css";
 
 const App = () => {
   // State
+  const [engine, setEngine] = useState(engines[0]);
   const [dataset, setDataset] = useState(datasets[0].path);
   const [query, setQuery] = useState(queryTypes[0].id);
   const [params, setParams] = useState(
@@ -22,6 +23,8 @@ const App = () => {
   const [results, setResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [alertMessage, setAlertMessage] = useState(null);
+  // Track if form has been modified since last submission
+  const [isFormModified, setIsFormModified] = useState(false);
 
   // Refs
   const appHeaderRef = useRef(null);
@@ -41,6 +44,7 @@ const App = () => {
       }
       setParams((prev) => ({ ...prev, [name]: processedValue }));
       clearValidationError(name);
+      setIsFormModified(true);
     },
     [clearValidationError]
   );
@@ -59,8 +63,9 @@ const App = () => {
     setIsLoading(true);
     setAlertMessage(null);
     setResults([]);
+    setIsFormModified(false);
 
-    const response = await submitQuery(dataset, query, params);
+    const response = await submitQuery(engine, dataset, query, params);
 
     if (response.success) {
       setResults(response.data);
@@ -80,11 +85,13 @@ const App = () => {
 
   // Reset form to initial state
   const resetForm = useCallback(() => {
+    setEngine(engines[0]);
     setDataset(datasets[0].path);
     setQuery(queryTypes[0].id);
     setParams(getDefaultParamsForQuery(queryTypes[0].id));
     setValidation({});
     setAlertMessage(null);
+    setIsFormModified(false);
   }, [setValidation]);
 
   // Clear results and success/info alerts
@@ -105,9 +112,21 @@ const App = () => {
       setParams(getDefaultParamsForQuery(newQuery));
       setValidation({});
       setAlertMessage(null);
+      setIsFormModified(true);
     },
     [setValidation]
   );
+
+  // Handle window resize for better responsiveness
+  useEffect(() => {
+    const handleResize = () => {
+      // Force re-render on resize to ensure proper layout adjustments
+      setIsFormModified((prevState) => prevState);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   return (
     <div className="app-container">
@@ -138,6 +157,8 @@ const App = () => {
           <div className="left-column">
             <ErrorBoundary>
               <DataForm
+                engine={engine}
+                setEngine={setEngine}
                 dataset={dataset}
                 setDataset={setDataset}
                 query={query}
@@ -148,6 +169,7 @@ const App = () => {
                 handleParamChange={handleParamChange}
                 handleSubmit={handleSubmit}
                 resetForm={resetForm}
+                isFormModified={isFormModified}
               />
             </ErrorBoundary>
           </div>

@@ -1,3 +1,5 @@
+export const engines = ["Auto", "Choco-mining", "SPMF"];
+
 export const datasets = [
   { label: "anneal", path: "/data/anneal.dat" },
   { label: "chess", path: "/data/chess.dat" },
@@ -38,7 +40,7 @@ export const queryTooltips = {
     "Extraire les motifs fermés ne contenant pas les items spécifiés et respectant le support minimum.",
 };
 
-export const GLOBAL_REQUEST_TIMEOUT = 60000; // 1 minute in milliseconds
+export const GLOBAL_REQUEST_TIMEOUT = 30000; // 0.5 minute in milliseconds
 
 // Helper function to get default params based on query type
 export const getDefaultParamsForQuery = (queryType) => {

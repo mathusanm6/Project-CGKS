@@ -5,7 +5,7 @@ import { GLOBAL_REQUEST_TIMEOUT } from "../constants";
 const API_BASE_URL =
   process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
 
-export const submitQuery = async (dataset, queryType, params) => {
+export const submitQuery = async (engine, dataset, queryType, params) => {
   try {
     // Process params for sending to the API
     const apiParams = { ...params };
@@ -18,6 +18,7 @@ export const submitQuery = async (dataset, queryType, params) => {
     const response = await axios.post(
       `${API_BASE_URL}/mine`,
       {
+        engine,
         dataset,
         queryType,
         params: apiParams,

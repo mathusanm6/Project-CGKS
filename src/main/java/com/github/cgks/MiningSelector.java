@@ -1,22 +1,19 @@
 package com.github.cgks;
 
-
-import jep.Jep;
-import jep.JepException;
-
 import com.github.cgks.choco.ChocoMiner;
 import com.github.cgks.spmf.SpmfMiner;
 
 public class MiningSelector {
-    public static Miner chooseMiner(MiningRequest request) throws JepException{
-        // TODO(jewin): Implement the logic to choose the mining engine based on the
-        // request.
-        // For now, we will just return randomly either ChocoMining or SPMF.
-        
-        if (true) {
+    public static Miner chooseMiner(MiningRequest request) {
+        if (request.getEngine() == null || request.getEngine().toLowerCase().equals("auto")) {
+            // TODO: Implement logic to choose the best engine
             return new SpmfMiner();
-        } else {
+        } else if (request.getEngine().toLowerCase().equals("spmf")) {
+            return new SpmfMiner();
+        } else if (request.getEngine().toLowerCase().equals("choco-mining")) {
             return new ChocoMiner();
+        } else {
+            throw new IllegalArgumentException("Unknown engine: " + request.getEngine().toLowerCase());
         }
     }
 }
