@@ -52,7 +52,6 @@ export default function App() {
       case "rare":
       case "generators":
       case "minimal":
-      case "rare":
         return (
           <>
             <label>Support minimum :</label>
