@@ -31,15 +31,15 @@ def load_model(model_path):
         raise Exception(f"Error loading model: {str(e)}")
     
 
-# Params retrieval
-model = load_model(f"{BASE_DIR}/pipeline.pkl")
-metadata = pd.read_csv(f"{BASE_DIR}/metadata.csv")
-request = {
-    'Query': 'Q1',
-    'File': 'contextPasquier99.dat',
-    'Frequency': 0.34
-}
-request_pd = pd.DataFrame({k: [v] for k, v in request.items()})
-input = pd.merge(request_pd, metadata, on='File', how='inner')
-output= model.predict(input)[0] # Prediction
-print(output)
+if __name__ == '__main__':
+    # Params retrieval
+    model = load_model(f"{BASE_DIR}/pipeline.pkl")
+    metadata = pd.read_csv(f"{BASE_DIR}/metadata.csv")
+    request = {
+        'Query': 'Q1',
+        'File': 'contextPasquier99.dat',
+        'Frequency': 0.34
+    }
+    request_pd = pd.DataFrame({k: [v] for k, v in request.items()})
+    input = pd.merge(request_pd, metadata, on='File', how='inner')
+    output= model.predict(input)[0] # Prediction
