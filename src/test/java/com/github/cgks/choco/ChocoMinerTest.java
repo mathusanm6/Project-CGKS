@@ -540,7 +540,7 @@ class ChocoMinerTest {
                 validateMaximumSupport(results, 0.4); // Actually means freq < 2, so freq=1.
 
                 Set<Set<Integer>> expectedItemsets = new HashSet<>();
-                expectedItemsets.add(new TreeSet<>(Arrays.asList(1, 3, 4)));
+                expectedItemsets.add(new TreeSet<>(Arrays.asList(4)));
 
                 assertExactItemsets(results, expectedItemsets);
             });
@@ -558,10 +558,10 @@ class ChocoMinerTest {
                 validateMaximumSupport(results, 0.7); // freq <= floor(5*0.7) = 3
 
                 Set<Set<Integer>> expectedItemsets = new HashSet<>();
-                expectedItemsets.add(new TreeSet<>(Arrays.asList(1, 3))); // freq 1
-                expectedItemsets.add(new TreeSet<>(Arrays.asList(1, 3, 4))); // freq 1
-                expectedItemsets.add(new TreeSet<>(Arrays.asList(2, 3, 5))); // freq 1
-                expectedItemsets.add(new TreeSet<>(Arrays.asList(1, 2, 3, 5))); // freq 1
+                expectedItemsets.add(new TreeSet<>(Arrays.asList(1)));
+                expectedItemsets.add(new TreeSet<>(Arrays.asList(4)));
+                expectedItemsets.add(new TreeSet<>(Arrays.asList(2, 3)));
+                expectedItemsets.add(new TreeSet<>(Arrays.asList(3, 5)));
 
                 assertContainsItemsets(results, expectedItemsets);
             });

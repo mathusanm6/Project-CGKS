@@ -317,7 +317,7 @@ public class ChocoMiner implements Miner {
             // Post constraints
             model.arithm(freq, "<", minSupport).post();
             ConstraintFactory.coverSize(database, freq, x).post();
-            ConstraintFactory.frequentSubs(database, x).post();
+            ConstraintFactory.frequentSubs(database, minSupport, x).post();
 
             Solver solver = model.getSolver();
             List<MiningResult> results = new ArrayList<>();
