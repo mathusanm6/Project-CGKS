@@ -1,10 +1,15 @@
-VENV_DIR := .venv
+PROJECT_ROOT := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
+VENV_DIR := $(PROJECT_ROOT).venv
 PYTHON := $(VENV_DIR)/bin/python
 PIP := $(VENV_DIR)/bin/pip
 
-MODEL_SCRIPT := study/main.py
-FRONTEND_DIR := frontend/motif-mining-app
-DOCS_DIR := frontend-docs/swagger-ui
+MODEL_SCRIPT := $(PROJECT_ROOT)study/main.py
+MODEL_PKL := $(PROJECT_ROOT)study/pipeline/v0/pipeline.pkl
+RESOURCE_DIR := $(PROJECT_ROOT)src/main/resources
+
+FRONTEND_DIR := $(PROJECT_ROOT)frontend/motif-mining-app
+DOCS_DIR := $(PROJECT_ROOT)frontend-docs/swagger-ui
+
 JAVA_MAIN_CLASS := com.github.cgks.MotifMiningApplication
 JAVA := /Library/Java/JavaVirtualMachines/amazon-corretto-11.jdk/Contents/Home/bin/java
 
@@ -37,6 +42,8 @@ venv:
 
 model: $(MODEL_SCRIPT)
 	$(PYTHON) $(MODEL_SCRIPT)
+	mkdir -p $(RESOURCE_DIR)/model
+	cp $(MODEL_PKL) $(RESOURCE_DIR)/model/
 
 # === Backend (Java - Maven) ===
 clean:
