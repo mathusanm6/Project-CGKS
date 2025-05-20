@@ -38,8 +38,8 @@ META = pd.read_csv(f"{BASE_DIR}/resources/model/metadata.csv")
 @app.route('/predict', methods=['POST'])
 def predict():
     # Get data from request
-    data = request.json
-    print(data)
+    #data = request.json
+    #print(data)
     request = {
         'Query': 'Q1',
         'File': 'contextPasquier99.dat',
@@ -47,8 +47,8 @@ def predict():
     }
     request_pd = pd.DataFrame({k: [v] for k, v in request.items()})
     input = pd.merge(request_pd, META, on='File', how='inner')
-    prediction = MODEL.predict(input)[0] # Prediction    
-    return jsonify({'prediction': prediction})
+    prediction = MODEL.predict(input) # Prediction    
+    return jsonify({'prediction': prediction.tolist()})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

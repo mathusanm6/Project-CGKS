@@ -5,8 +5,12 @@ import java.util.HashMap;
 import com.github.cgks.choco.ChocoMiner;
 import com.github.cgks.spmf.SpmfMiner;
 
-import org.python.core.*;
-import org.python.util.PythonInterpreter;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.Scanner;
+import com.google.gson.Gson;
 
 
 public class MiningSelector {
@@ -34,34 +38,45 @@ public class MiningSelector {
             throw new IllegalArgumentException("Unknown engine: " + request.getEngine().toLowerCase());
         }
     }
-    public class PyModelPredictor {
-        private PythonInterpreter interpreter;
+    
+    
+    public static String getPrediction(HashMap<String, Object> features) throws Exception {
+        // Convert HashMap to JSON
+        Gson gson = new Gson();
+        String jsonInput = gson.toJson(features);
         
-        public PyModelPredictor() {
-            // Initialize Python interpreter
-            interpreter = new PythonInterpreter();
-            interpreter.exec("import pickle\n" +
-                             "import pandas as pd\n" +
-                             "with open('your_model.pkl', 'rb') as f:\n" +
-                             "    model = pickle.load(f)\n");
+        // Create connection
+        URL url = new URL("http://localhost:5000/predict");
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("POST");
+        conn.setRequestProperty("Content-Type", "application/json");
+        conn.setDoOutput(true);
+        
+        // Send request
+        try (OutputStream os = conn.getOutputStream()) {
+            byte[] input = jsonInput.getBytes("utf-8");
+            os.write(input, 0, input.length);
         }
         
-        public Object predict(HashMap<String, Object> features) {
-            // Convert HashMap to Python dict
-            PyDictionary pyDict = new PyDictionary();
-            for (Map.Entry<String, Object> entry : features.entrySet()) {
-                pyDict.__setitem__(new PyString(entry.getKey()), 
-                                  Py.java2py(entry.getValue()));
-            }
+        // Read response
+        try (Scanner scanner = new Scanner(conn.getInputStream(), "utf-8")) {
+            String response = scanner.useDelimiter("\\A").next();
+            return response;
+        }
+    }
+    
+    public static void main(String[] args) {
+        try {
+            // Example usage
+            HashMap<String, Object> features = new HashMap<>();
+            features.put("Query", "Q1");
+            features.put("File", "contextPasquier99.dat");
+            features.put("Frequency", 0.6);
             
-            // Create prediction code and execute
-            interpreter.set("input_dict", pyDict);
-            interpreter.exec("df = pd.DataFrame([input_dict])\n" +
-                             "prediction = model.predict(df)");
-            
-            // Get result
-            PyObject result = interpreter.get("prediction");
-            return result.__tojava__(Object.class);
+            String prediction = getPrediction(features);
+            System.out.println("Prediction: " + prediction);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }
