@@ -63,7 +63,6 @@ public class MiningSelector {
             try {
                 // Get prediction
                 Integer prediction = getPrediction(features).getAsInt();
-                System.out.println(prediction);
 
                 // Make choice
                 if(prediction==1){

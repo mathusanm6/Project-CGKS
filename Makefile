@@ -55,7 +55,10 @@ build:
 	mvn install
 
 api:
-	mvn org.springframework.boot:spring-boot-maven-plugin:2.7.15:run
+	mvn org.springframework.boot:spring-boot-maven-plugin:2.7.15:run 
+
+selector:
+	 source .venv/bin/activate && python3 src/main/python/classifier_api.py
 
 # === Frontend (React) ===
 frontend:
