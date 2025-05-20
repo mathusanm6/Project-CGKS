@@ -408,6 +408,25 @@ public class SpmfMiner implements Miner {
     }
 
     /**
+     * Validates and parses the maximum support parameter.
+     *
+     * @param params The parameters map
+     * @return The calculated maximum support value
+     * @throws ParameterException If the maxSupport parameter is invalid
+     */
+    private Double parseMaxSupport(Map<String, String> params) throws ParameterException {
+        try {
+            Double maxSupportRatio = Double.parseDouble(params.get("maxSupport"));
+            if (maxSupportRatio <= 0.0 || maxSupportRatio > 1.0) {
+                throw new ParameterException("maxSupport must be between 0.0 (exclusive) and 1.0 (inclusive)");
+            }
+            return maxSupportRatio;
+        } catch (NumberFormatException e) {
+            throw new ParameterException("Invalid maxSupport value: " + params.get("maxSupport"));
+        }
+    }
+
+    /**
      * Validates and parses the required/exculded items.
      *
      * @param param The items parameter
