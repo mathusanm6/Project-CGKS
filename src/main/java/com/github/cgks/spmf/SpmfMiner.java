@@ -29,28 +29,32 @@ import ca.pfv.spmf.patterns.itemset_array_integers_with_count.Itemset;
 import ca.pfv.spmf.patterns.itemset_array_integers_with_count.Itemsets;
 
 /**
- * The {@code SpmfMiner} class implements the {@link Miner} interface and provides
- * various methods for mining itemsets from datasets using algorithms from the SPMF library.
+ * The {@code SpmfMiner} class implements the {@link Miner} interface and
+ * provides
+ * various methods for mining itemsets from datasets using algorithms from the
+ * SPMF library.
  * <p>
  * Supported mining tasks include:
  * <ul>
- *     <li>Frequent itemset mining</li>
- *     <li>Closed itemset mining</li>
- *     <li>Maximal itemset mining</li>
- *     <li>Rare itemset mining</li>
- *     <li>Generator itemset mining</li>
- *     <li>Minimal itemset mining</li>
- *     <li>Mining itemsets of specific size ranges</li>
- *     <li>Mining itemsets containing or excluding specific items</li>
+ * <li>Frequent itemset mining</li>
+ * <li>Closed itemset mining</li>
+ * <li>Maximal itemset mining</li>
+ * <li>Rare itemset mining</li>
+ * <li>Generator itemset mining</li>
+ * <li>Minimal itemset mining</li>
+ * <li>Mining itemsets of specific size ranges</li>
+ * <li>Mining itemsets containing or excluding specific items</li>
  * </ul>
  * <p>
  * The class provides utility methods for converting file paths to datasets and
  * for filtering itemsets based on presence or absence of items.
  * <p>
- * Each mining method expects a dataset path and a map of parameters, typically including
+ * Each mining method expects a dataset path and a map of parameters, typically
+ * including
  * minimum support and, for some methods, item constraints or size constraints.
  * <p>
  * Example usage:
+ * 
  * <pre>
  *     SpmfMiner miner = new SpmfMiner();
  *     Map<String, String>; params = new HashMap<>();
@@ -58,17 +62,17 @@ import ca.pfv.spmf.patterns.itemset_array_integers_with_count.Itemsets;
  *     List<MiningResult> results = miner.extractFrequent("dataset.txt", params);
  * </pre>
  *
- * @author  CGKS team
+ * @author CGKS team
  * @version 1.0
  */
+
 public class SpmfMiner implements Miner {
 
     private static final Logger LOGGER = Logger.getLogger(SpmfMiner.class.getName());
 
-
     @Override
-    public List<MiningResult> extractFrequent(String datasetPath, Map<String, String> params) throws MiningException{
-        try{
+    public List<MiningResult> extractFrequent(String datasetPath, Map<String, String> params) throws MiningException {
+        try {
             validateParams(params, "minSupport");
             Dataset dataset = pathToDataset(datasetPath);
             Double minSupport = parseMinSupport(params);
@@ -92,7 +96,7 @@ public class SpmfMiner implements Miner {
             Itemsets itemsets = algo.runAlgorithm(minSupport, dataset, null);
             return ConvertToMiningResult.convertItemsetsToMiningResults(itemsets);
         } catch (ParameterException | DatabaseException e) {
-            throw e; 
+            throw e;
         } catch (Exception e) {
             throw new MiningException("Unexpected error in extractClosed: " + e.getMessage(), e);
         }
@@ -107,11 +111,11 @@ public class SpmfMiner implements Miner {
             Itemsets itemsets = algo.runAlgorithm(fileToPath(datasetPath), null, minSupport);
             return ConvertToMiningResult.convertItemsetsToMiningResults(itemsets);
         } catch (ParameterException | DatabaseException e) {
-            throw e; 
+            throw e;
         } catch (Exception e) {
             throw new MiningException("Unexpected error in extractMaximal: " + e.getMessage(), e);
         }
-	}
+    }
 
     @Override
     public List<MiningResult> extractRare(String datasetPath, Map<String, String> params) throws MiningException {
@@ -122,7 +126,7 @@ public class SpmfMiner implements Miner {
             Itemsets itemsets = algo.runAlgorithm(fileToPath(datasetPath), null, minSupport, 0);
             return ConvertToMiningResult.convertItemsetsToMiningResults(itemsets);
         } catch (ParameterException | DatabaseException e) {
-            throw e; 
+            throw e;
         } catch (Exception e) {
             throw new MiningException("Unexpected error in extractRare: " + e.getMessage(), e);
         }
@@ -130,22 +134,22 @@ public class SpmfMiner implements Miner {
 
     @Override
     public List<MiningResult> extractGenerators(String datasetPath, Map<String, String> params) throws MiningException {
-		try{
+        try {
             validateParams(params, "minSupport");
             TransactionDatabase context = readTransactionDatabase(datasetPath);
             Double minSupport = parseMinSupport(params);
-            AlgoZart algo = new AlgoZart();		
+            AlgoZart algo = new AlgoZart();
             TZTableClosed results = algo.runAlgorithm(context, minSupport);
             Itemsets itemsets = new Itemsets("Generator itemset");
-            for(int i=0; i< results.levels.size(); i++){
-                for(Itemset closed : results.levels.get(i)){
+            for (int i = 0; i < results.levels.size(); i++) {
+                for (Itemset closed : results.levels.get(i)) {
                     List<Itemset> generators = results.mapGenerators.get(closed);
                     // if there are some generators
-                    if(generators.size()!=0) { 
-                        for(Itemset generator : generators){
+                    if (generators.size() != 0) {
+                        for (Itemset generator : generators) {
                             itemsets.addItemset(generator, i);
                         }
-                    }else {
+                    } else {
                         // otherwise the closed itemset is a generator
                         itemsets.addItemset(closed, i);
                     }
@@ -153,7 +157,7 @@ public class SpmfMiner implements Miner {
             }
             return ConvertToMiningResult.convertItemsetsToMiningResults(itemsets);
         } catch (ParameterException | DatabaseException e) {
-            throw e; 
+            throw e;
         } catch (Exception e) {
             throw new MiningException("Unexpected error in extractGenerators: " + e.getMessage(), e);
         }
@@ -168,14 +172,15 @@ public class SpmfMiner implements Miner {
             Itemsets itemsets = algo.runAlgorithm(minSupport, fileToPath(datasetPath), null);
             return ConvertToMiningResult.convertItemsetsToMiningResults(itemsets);
         } catch (ParameterException | DatabaseException e) {
-            throw e; 
+            throw e;
         } catch (Exception e) {
             throw new MiningException("Unexpected error in extractMinimal: " + e.getMessage(), e);
         }
     }
 
     @Override
-    public List<MiningResult> extractSizeBetween(String datasetPath, Map<String, String> params) throws MiningException {
+    public List<MiningResult> extractSizeBetween(String datasetPath, Map<String, String> params)
+            throws MiningException {
         try {
             validateParams(params, "minSize", "maxSize", "minSupport");
             Dataset dataset = pathToDataset(datasetPath);
@@ -206,10 +211,9 @@ public class SpmfMiner implements Miner {
 
             AlgoLCM algo = new AlgoLCM();
             Itemsets itemsets = algo.runAlgorithm(minSupport, dataset, null);
-            
-            Itemsets results = new Itemsets( 
-                String.format("Itemsets de taille %d à %d", minSize, maxSize)
-            );
+
+            Itemsets results = new Itemsets(
+                    String.format("Itemsets de taille %d à %d", minSize, maxSize));
 
             for (List<Itemset> level : itemsets.getLevels()) {
                 for (Itemset itemset : level) {
@@ -222,7 +226,7 @@ public class SpmfMiner implements Miner {
 
             return ConvertToMiningResult.convertItemsetsToMiningResults(results);
         } catch (ParameterException | DatabaseException e) {
-            throw e; 
+            throw e;
         } catch (Exception e) {
             throw new MiningException("Unexpected error in extractSizeBetween: " + e.getMessage(), e);
         }
@@ -233,7 +237,7 @@ public class SpmfMiner implements Miner {
         try {
             validateParams(params, "minSupport", "items");
             Double minSupport = parseMinSupport(params);
-            String param = params.get("items"); 
+            String param = params.get("items");
             List<Integer> requiredItems = parseItems(param);
             Dataset dataset = pathToDataset(datasetPath);
             AlgoLCM algo = new AlgoLCM();
@@ -242,24 +246,21 @@ public class SpmfMiner implements Miner {
 
             // Cas spécial: si aucun item requis, on retourne tout
             if (requiredItems == null || requiredItems.isEmpty()) {
-                return  ConvertToMiningResult.convertItemsetsToMiningResults(itemsets);
+                return ConvertToMiningResult.convertItemsetsToMiningResults(itemsets);
             }
 
             // Tri des items requis pour la recherche binaire
             List<Integer> sortedRequired = new ArrayList<>(requiredItems);
             Collections.sort(sortedRequired);
-            
 
             // Parcours optimisé avec stream
-            itemsets.getLevels().forEach(level -> 
-                level.stream()
+            itemsets.getLevels().forEach(level -> level.stream()
                     .filter(itemset -> containsAllRequired(itemset, sortedRequired))
-                    .forEach(itemset -> results.addItemset(itemset, itemset.size()))
-            );
+                    .forEach(itemset -> results.addItemset(itemset, itemset.size())));
 
             return ConvertToMiningResult.convertItemsetsToMiningResults(results);
         } catch (ParameterException | DatabaseException e) {
-            throw e; 
+            throw e;
         } catch (Exception e) {
             throw new MiningException("Unexpected error in extractPresence: " + e.getMessage(), e);
         }
@@ -270,67 +271,82 @@ public class SpmfMiner implements Miner {
         try {
             validateParams(params, "minSupport", "items");
             Double minSupport = parseMinSupport(params);
-            String param = params.get("items"); 
+            String param = params.get("items");
             List<Integer> excludedItems = parseItems(param);
             Dataset dataset = pathToDataset(datasetPath);
             AlgoLCM algo = new AlgoLCM();
             Itemsets itemsets = algo.runAlgorithm(minSupport, dataset, null);
-            
+
             Itemsets results = new Itemsets("Itemsets sans: " + excludedItems);
-            
+
             if (excludedItems == null || excludedItems.isEmpty()) {
                 return ConvertToMiningResult.convertItemsetsToMiningResults(itemsets);
             }
 
             List<Integer> sortedExcluded = new ArrayList<>(excludedItems);
             Collections.sort(sortedExcluded);
-            
 
-            itemsets.getLevels().forEach(level ->
-                level.stream()
+            itemsets.getLevels().forEach(level -> level.stream()
                     .filter(itemset -> !containsAny(itemset.getItems(), sortedExcluded))
-                    .forEach(itemset -> results.addItemset(itemset, itemset.size()))
-            );
+                    .forEach(itemset -> results.addItemset(itemset, itemset.size())));
 
             return ConvertToMiningResult.convertItemsetsToMiningResults(results);
         } catch (ParameterException | DatabaseException e) {
-            throw e; 
+            throw e;
         } catch (Exception e) {
             throw new MiningException("Unexpected error in extractAbsence: " + e.getMessage(), e);
         }
     }
 
     /**
-	 * Vérifie si un itemset contient tous les items requis (version optimisée List<Integer>)
-	 */
-	private static boolean containsAllRequired(Itemset itemset, List<Integer> requiredItems) {
-		List<Integer> itemsetItems = Arrays.stream(itemset.getItems())
-										.boxed()
-										.collect(Collectors.toList());
-		return itemsetItems.containsAll(requiredItems);
-	}
+     * Vérifie si un itemset contient tous les items requis (version optimisée
+     * List<Integer>)
+     */
+    private static boolean containsAllRequired(Itemset itemset, List<Integer> requiredItems) {
+        List<Integer> itemsetItems = Arrays.stream(itemset.getItems())
+                .boxed()
+                .collect(Collectors.toList());
+        return itemsetItems.containsAll(requiredItems);
+    }
 
     /**
-	 * Vérifie si un tableau contient au moins un item interdit (version optimisée List<Integer>)
-	 */
+     * Vérifie si un tableau contient au moins un item interdit (version optimisée
+     * List<Integer>)
+     */
     private static boolean containsAny(int[] items, List<Integer> excludedItems) {
-		return Arrays.stream(items)
-					.anyMatch(item -> Collections.binarySearch(excludedItems, item) >= 0);
-	}
+        return Arrays.stream(items)
+                .anyMatch(item -> Collections.binarySearch(excludedItems, item) >= 0);
+    }
 
-
-    private static String fileToPath(String file) throws DatabaseException{
+    /**
+     * Converts a resource file path to an absolute file system path.
+     * This method locates the resource using the class loader and decodes its URL
+     * path.
+     *
+     * @param file The relative path to the resource file (e.g., "/data/input.txt")
+     * @return The absolute file system path to the resource
+     * @throws DatabaseException If the resource cannot be found or decoded
+     */
+    private static String fileToPath(String file) throws DatabaseException {
         try {
             URL url = TestSPMF.class.getResource(file);
-            return java.net.URLDecoder.decode(url.getPath(),"UTF-8");
+            return java.net.URLDecoder.decode(url.getPath(), "UTF-8");
         } catch (Exception e) {
             throw new DatabaseException("Error loading dataset: " + e.getMessage(), e);
         }
-	}
+    }
 
-    private static Dataset pathToDataset(String path) throws DatabaseException{
-        try {    
-            String input = fileToPath(path); 
+    /**
+     * Loads a dataset from the specified path and returns a Dataset object.
+     * This method resolves the file path and initializes the Dataset.
+     *
+     * @param path The relative path to the dataset file
+     * @return The loaded Dataset object
+     * @throws DatabaseException If the dataset cannot be loaded or parsed
+     */
+    private static Dataset pathToDataset(String path) throws DatabaseException {
+        try {
+            String input = fileToPath(path);
             Dataset dataset = new Dataset(input);
             return dataset;
         } catch (Exception e) {
@@ -338,16 +354,23 @@ public class SpmfMiner implements Miner {
         }
     }
 
+    /**
+     * Loads a transaction database from the specified dataset path.
+     * This method reads the file and initializes a TransactionDatabase object.
+     *
+     * @param datasetPath The relative path to the dataset file
+     * @return The loaded TransactionDatabase object
+     * @throws DatabaseException If the file cannot be loaded or read
+     */
     private static TransactionDatabase readTransactionDatabase(String datasetPath) throws DatabaseException {
         try {
             TransactionDatabase context = new TransactionDatabase();
-		    context.loadFile(fileToPath(datasetPath));
+            context.loadFile(fileToPath(datasetPath));
             return context;
         } catch (IOException e) {
             throw new DatabaseException("Error loading dataset: " + e.getMessage(), e);
         }
     }
-
 
     /**
      * Validates that required parameters are present.
@@ -378,7 +401,7 @@ public class SpmfMiner implements Miner {
             if (minSupportRatio <= 0.0 || minSupportRatio > 1.0) {
                 throw new ParameterException("minSupport must be between 0.0 (exclusive) and 1.0 (inclusive)");
             }
-            return minSupportRatio ;
+            return minSupportRatio;
         } catch (NumberFormatException e) {
             throw new ParameterException("Invalid minSupport value: " + params.get("minSupport"));
         }
@@ -387,19 +410,19 @@ public class SpmfMiner implements Miner {
     /**
      * Validates and parses the required/exculded items.
      *
-     * @param param    The items parameter
+     * @param param The items parameter
      * @return An array of integers representing the items
      * @throws ParameterException If the items parameter is invalid
      */
     private List<Integer> parseItems(String param) throws ParameterException {
         try {
             return Arrays.stream(param.split(","))
-                                      .map(String::trim)
-                                      .map(Integer::parseInt)
-                                      .collect(Collectors.toList());
+                    .map(String::trim)
+                    .map(Integer::parseInt)
+                    .collect(Collectors.toList());
         } catch (NumberFormatException e) {
             throw new ParameterException("Invalid items parameter: " + param);
         }
     }
-    
+
 }
