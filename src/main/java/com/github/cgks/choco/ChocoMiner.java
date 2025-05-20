@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
+import java.util.stream.IntStream;
 
 import org.chocosolver.solver.Model;
 import org.chocosolver.solver.Solver;
@@ -209,22 +210,48 @@ public class ChocoMiner implements Miner {
             TransactionalDatabase database = readTransactionalDatabase(datasetPath);
             int minSupport = parseMinSupport(params, database);
 
-            if (minSupport <= 1) {
-                throw new ParameterException(
-                        "For rare itemset mining, minSupport must result in a value greater than 1");
-            }
-
             LOGGER.info("Starting rare itemset mining with minSupport: " + minSupport);
 
             Model model = new Model("Rare Itemset Mining");
             BoolVar[] x = model.boolVarArray("x", database.getNbItems());
             IntVar freq = model.intVar("freq", 1, database.getNbTransactions());
 
+            Solver solver = model.getSolver();
             // Post constraint
             model.arithm(freq, "<", minSupport).post();
             ConstraintFactory.coverSize(database, freq, x).post();
 
-            Solver solver = model.getSolver();
+            // We need to add a constraint to ensure that at least one rare item is included
+            // First, identify rare items (items with support < maxSupport)
+            boolean[] rareItems = new boolean[database.getNbItems()];
+            while (solver.solve()) {
+                int[] itemset = IntStream.range(0, x.length)
+                .filter(i -> x[i].getValue() == 1)
+                .map(i -> database.getItems()[i])
+                .toArray();
+                if(itemset.length<=1) rareItems[itemset[0]-1]=true;
+            }   
+            int index = 0;  
+            for(boolean b: rareItems){
+                if(b){
+                    System.err.println("rare set of size 1 : " + (index+1));
+                }
+                index++;
+            }
+            solver.reset();
+
+            // Add constraint: at least one rare item must be included
+            BoolVar[] rareItemVars = new BoolVar[database.getNbItems()];
+            for (int i = 0; i < database.getNbItems(); i++) {
+                if (rareItems[i]) {
+                    rareItemVars[i] = x[i];
+                } else {
+                    // Non-rare items don't contribute to this constraint
+                    rareItemVars[i] = model.boolVar(false);
+                }
+            }
+            model.sum(rareItemVars, ">=", 1).post();
+
             List<MiningResult> results = new ArrayList<>();
 
             try {
