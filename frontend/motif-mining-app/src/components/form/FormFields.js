@@ -43,14 +43,55 @@ const FormFields = ({ query, params, validation, handleParamChange }) => {
     </div>
   );
 
+  const commonMaxSupportField = (
+    <div className="field-group">
+      <label
+        htmlFor={FORM_FIELD_IDS.maxSupport}
+        className="label-style"
+        id={`${FORM_FIELD_IDS.maxSupport}-label`}
+      >
+        <Tooltip content="Proportion maximale de transactions contenant le motif (nombre entre 0 et 1, ex: 0.5)">
+          Support maximum
+        </Tooltip>
+      </label>
+      <input
+        id={FORM_FIELD_IDS.maxSupport}
+        type="number"
+        min="0"
+        max="1"
+        step="0.01"
+        name="maxSupport"
+        placeholder="Ex: 0.5"
+        value={params.maxSupport ?? ""}
+        onChange={handleParamChange}
+        className={
+          validation.maxSupport ? "input-base input-error" : "input-base"
+        }
+        aria-invalid={validation.maxSupport ? "true" : "false"}
+        aria-describedby={
+          validation.maxSupport ? "maxSupport-error" : undefined
+        }
+      />
+      <p
+        id="maxSupport-error"
+        className="error-text"
+        role={validation.maxSupport ? "alert" : undefined}
+      >
+        {validation.maxSupport || ""}
+      </p>
+    </div>
+  );
+
   switch (query) {
     case "frequent":
     case "closed":
     case "maximal":
-    case "rare":
     case "generators":
-    case "minimal":
       return commonMinSupportField;
+
+    case "rare":
+    case "minimal":
+      return commonMaxSupportField;
 
     case "size_between":
       return (

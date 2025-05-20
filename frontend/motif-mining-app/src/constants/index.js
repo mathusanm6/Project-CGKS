@@ -44,14 +44,22 @@ export const GLOBAL_REQUEST_TIMEOUT = 30000; // 0.5 minute in milliseconds
 
 // Helper function to get default params based on query type
 export const getDefaultParamsForQuery = (queryType) => {
-  const baseParams = { minSupport: 0.5 };
+  const baseParams = {};
 
   switch (queryType) {
     case "size_between":
-      return { ...baseParams, minSize: "", maxSize: "" };
+      return { ...baseParams, minSupport: 0.5, minSize: "", maxSize: "" };
     case "presence":
     case "absence":
-      return { ...baseParams, items: "" };
+      return { ...baseParams, minSupport: 0.5, items: "" };
+    case "minimal":
+    case "rare":
+      return { ...baseParams, maxSupport: 0.5 };
+    case "frequent":
+    case "closed":
+    case "maximal":
+    case "generators":
+      return { ...baseParams, minSupport: 0.5 };
     default:
       return baseParams;
   }
@@ -68,6 +76,7 @@ export const TABLE_COLUMN_WIDTHS = {
 // Common form elements
 export const FORM_FIELD_IDS = {
   minSupport: "minSupport-input",
+  maxSupport: "maxSupport-input",
   minSize: "minSize-input",
   maxSize: "maxSize-input",
   items: "items-input",

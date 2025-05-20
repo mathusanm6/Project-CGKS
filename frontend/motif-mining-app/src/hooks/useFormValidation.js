@@ -5,20 +5,40 @@ export const useFormValidation = () => {
 
   const validateForm = (query, params) => {
     const errors = {};
-    const currentMinSupport = params.minSupport;
 
-    if (
-      currentMinSupport === "" ||
-      currentMinSupport === null ||
-      typeof currentMinSupport === "undefined"
-    ) {
-      errors.minSupport = "Le support minimum est requis.";
-    } else if (
-      isNaN(currentMinSupport) ||
-      currentMinSupport < 0 ||
-      currentMinSupport > 1
-    ) {
-      errors.minSupport = "Le support doit être un nombre entre 0 et 1.";
+    if (query === "rare" || query === "minimal") {
+      const currentMaxSupport = params.maxSupport;
+
+      if (
+        currentMaxSupport === "" ||
+        currentMaxSupport === null ||
+        typeof currentMaxSupport === "undefined"
+      ) {
+        errors.maxSupport = "Le support maximum est requis.";
+      }
+      if (
+        isNaN(currentMaxSupport) ||
+        currentMaxSupport < 0 ||
+        currentMaxSupport > 1
+      ) {
+        errors.maxSupport = "Le support doit être un nombre entre 0 et 1.";
+      }
+    } else {
+      const currentMinSupport = params.minSupport;
+
+      if (
+        currentMinSupport === "" ||
+        currentMinSupport === null ||
+        typeof currentMinSupport === "undefined"
+      ) {
+        errors.minSupport = "Le support minimum est requis.";
+      } else if (
+        isNaN(currentMinSupport) ||
+        currentMinSupport < 0 ||
+        currentMinSupport > 1
+      ) {
+        errors.minSupport = "Le support doit être un nombre entre 0 et 1.";
+      }
     }
 
     if (query === "size_between") {
