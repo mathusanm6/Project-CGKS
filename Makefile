@@ -10,9 +10,6 @@ RESOURCE_DIR := $(PROJECT_ROOT)src/main/resources
 FRONTEND_DIR := $(PROJECT_ROOT)frontend/motif-mining-app
 DOCS_DIR := $(PROJECT_ROOT)frontend-docs/swagger-ui
 
-JAVA_MAIN_CLASS := com.github.cgks.MotifMiningApplication
-JAVA := /Library/Java/JavaVirtualMachines/amazon-corretto-11.jdk/Contents/Home/bin/java
-
 .PHONY: all help venv model clean deps build api frontend docs
 
 help:
@@ -46,6 +43,8 @@ model: $(MODEL_SCRIPT)
 	cp $(MODEL_PKL) $(RESOURCE_DIR)/model/
 
 # === Backend (Java - Maven) ===
+java: clean deps install
+
 clean:
 	mvn clean
 
@@ -56,7 +55,7 @@ build:
 	mvn install
 
 api:
-	$(JAVA) -cp target/classes:target/dependency/* $(JAVA_MAIN_CLASS)
+	mvn org.springframework.boot:spring-boot-maven-plugin:2.7.15:run
 
 # === Frontend (React) ===
 frontend:
