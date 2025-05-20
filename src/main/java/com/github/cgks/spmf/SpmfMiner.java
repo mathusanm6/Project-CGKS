@@ -141,7 +141,7 @@ public class SpmfMiner implements Miner {
             AlgoZart algo = new AlgoZart();
             TZTableClosed results = algo.runAlgorithm(context, minSupport);
             Itemsets itemsets = new Itemsets("Generator itemset");
-            for (int i = 0; i < results.levels.size(); i++) {
+            for (int i = 1; i < results.levels.size(); i++) {
                 for (Itemset closed : results.levels.get(i)) {
                     List<Itemset> generators = results.mapGenerators.get(closed);
                     // if there are some generators
