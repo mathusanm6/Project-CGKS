@@ -1,4 +1,4 @@
-package com.github.cgks.choco;
+package com.github.cgks.spmf;
 
 import com.github.cgks.Miner;
 import com.github.cgks.MiningResult;
@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit tests for the ChocoMiner implementation with contextPasquier99.dat
+ * Unit tests for the SpmfMiner implementation with contextPasquier99.dat
  * dataset.
  * Dataset content:
  * 1 3 4
@@ -40,7 +40,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * - Item 4: 1 transaction (support = 0.2)
  * - Item 5: 4 transactions (support = 0.8)
  */
-class ChocoMinerTest {
+class SpmfMinerTest {
     private Miner miner;
     private String datasetPath;
     private static final String DEFAULT_DATASET_PATH = "/data/contextPasquier99.dat";
@@ -92,7 +92,7 @@ class ChocoMinerTest {
 
     @BeforeEach
     void setUp() {
-        miner = new ChocoMiner();
+        miner = new SpmfMiner();
         datasetPath = System.getProperty("dataset.path", DEFAULT_DATASET_PATH);
     }
 

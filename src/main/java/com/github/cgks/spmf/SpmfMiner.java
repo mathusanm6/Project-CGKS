@@ -332,7 +332,7 @@ public class SpmfMiner implements Miner {
             URL url = TestSPMF.class.getResource(file);
             return java.net.URLDecoder.decode(url.getPath(), "UTF-8");
         } catch (Exception e) {
-            throw new DatabaseException("Error loading dataset: " + e.getMessage(), e);
+            throw new DatabaseException("Error loading dataset: " + file + e.getMessage(), e);
         }
     }
 
@@ -350,7 +350,8 @@ public class SpmfMiner implements Miner {
             Dataset dataset = new Dataset(input);
             return dataset;
         } catch (Exception e) {
-            throw new DatabaseException("Error loading dataset: " + e.getMessage(), e);
+            e.printStackTrace();
+            throw new DatabaseException("Error loading dataset : " + path+ e.getMessage(), e);
         }
     }
 
@@ -368,7 +369,7 @@ public class SpmfMiner implements Miner {
             context.loadFile(fileToPath(datasetPath));
             return context;
         } catch (IOException e) {
-            throw new DatabaseException("Error loading dataset: " + e.getMessage(), e);
+            throw new DatabaseException("Error loading dataset: " + datasetPath + e.getMessage(), e);
         }
     }
 
