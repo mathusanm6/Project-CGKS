@@ -1,3 +1,4 @@
+# Data science lib for training classifier
 pandas==2.2.3
 numpy==2.2.5
 scikit-learn==1.6.1
@@ -5,3 +6,8 @@ matplotlib==3.10.3
 seaborn==0.13.2
 joblib==1.5.0
 ipykernel
+
+# Python Flask API dependencies
+flask==2.3.3
+gunicorn==21.2.0     # Production WSGI server
+flask-cors==4.0.0    # For handling CORS if needed

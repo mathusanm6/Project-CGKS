@@ -60,11 +60,11 @@
             <scope>test</scope>
         </dependency>
         
-        <!-- Jep for running prediction model from python -->
+        <!-- For JSON handling in Java -->
         <dependency>
-            <groupId>black.ninia</groupId>
-            <artifactId>jep</artifactId>
-            <version>4.1.1</version>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.10.1</version>
         </dependency>
     </dependencies>
 
