@@ -208,9 +208,15 @@ public class ChocoMiner implements Miner {
 
             // Read the transactional database
             TransactionalDatabase database = readTransactionalDatabase(datasetPath);
-            int minSupport = parseMinSupport(params, database);
+            int maxSupport = parseMinSupport(params, database);
+            
+            // minSupport is excluded as upperbound   
+            if (maxSupport <= 1) {
+                throw new ParameterException(
+                        "For rare itemset mining, minSupport must result in a value greater than 1");
+            }
 
-            LOGGER.info("Starting rare itemset mining with minSupport: " + minSupport);
+            LOGGER.info("Starting rare itemset mining with minSupport: " + maxSupport);
 
             Model model = new Model("Rare Itemset Mining");
             BoolVar[] x = model.boolVarArray("x", database.getNbItems());
@@ -218,7 +224,7 @@ public class ChocoMiner implements Miner {
 
             Solver solver = model.getSolver();
             // Post constraint
-            model.arithm(freq, "<", minSupport).post();
+            model.arithm(freq, "<", maxSupport).post();
             ConstraintFactory.coverSize(database, freq, x).post();
 
             // We need to add a constraint to ensure that at least one rare item is included

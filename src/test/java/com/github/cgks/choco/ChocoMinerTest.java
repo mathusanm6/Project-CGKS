@@ -467,7 +467,7 @@ class ChocoMinerTest {
         @Test
         @DisplayName("Invalid parameters - Too low support threshold")
         void testExtractRare_TooLowSupport() {
-            Map<String, String> params = Parameters.empty().withParam(MIN_SUPPORT_PARAM, -1).getHashMap();
+            Map<String, String> params = Parameters.empty().withParam(MIN_SUPPORT_PARAM, 0.1).getHashMap();
             assertThrows(ParameterException.class, () -> miner.extractRare(datasetPath, params));
         }
     }
