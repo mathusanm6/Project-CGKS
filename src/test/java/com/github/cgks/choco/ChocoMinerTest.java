@@ -45,6 +45,7 @@ class ChocoMinerTest {
     private String datasetPath;
     private static final String DEFAULT_DATASET_PATH = "src/test/resources/contextPasquier99.dat";
     private static final String MIN_SUPPORT_PARAM = "minSupport";
+    private static final String MAX_SUPPORT_PARAM = "maxSupport";
     private static final String MIN_SIZE_PARAM = "minSize";
     private static final String MAX_SIZE_PARAM = "maxSize";
     private static final String ITEMS_PARAM = "items";
@@ -414,7 +415,7 @@ class ChocoMinerTest {
         @DisplayName("MaxSupport derived from 0.4 (absolute 2) - Should include only item 4 and its combinations")
         void testExtractRare_MaxSupport40Percent() {
             assertTimeoutPreemptively(OPERATION_TIMEOUT, () -> {
-                Map<String, String> params = Parameters.empty().withParam(MIN_SUPPORT_PARAM, 0.4).getHashMap();
+                Map<String, String> params = Parameters.empty().withParam(MAX_SUPPORT_PARAM, 0.4).getHashMap();
                 List<MiningResult> results = miner.extractRare(datasetPath, params);
 
                 assertNotNull(results, "Results should not be null");
@@ -441,7 +442,7 @@ class ChocoMinerTest {
         @DisplayName("MaxSupport derived from 0.3 (absolute support < 2) - Should include only item 4 and combinations")
         void testExtractRare_MaxSupport30Percent() {
             assertTimeoutPreemptively(OPERATION_TIMEOUT, () -> {
-                Map<String, String> params = Parameters.empty().withParam(MIN_SUPPORT_PARAM, 0.3).getHashMap();
+                Map<String, String> params = Parameters.empty().withParam(MAX_SUPPORT_PARAM, 0.3).getHashMap();
                 List<MiningResult> results = miner.extractRare(datasetPath, params);
 
                 assertNotNull(results, "Results should not be null");
@@ -467,7 +468,7 @@ class ChocoMinerTest {
         @Test
         @DisplayName("Invalid parameters - Too low support threshold")
         void testExtractRare_TooLowSupport() {
-            Map<String, String> params = Parameters.empty().withParam(MIN_SUPPORT_PARAM, 0.1).getHashMap();
+            Map<String, String> params = Parameters.empty().withParam(MAX_SUPPORT_PARAM, 0.1).getHashMap();
             assertThrows(ParameterException.class, () -> miner.extractRare(datasetPath, params));
         }
     }

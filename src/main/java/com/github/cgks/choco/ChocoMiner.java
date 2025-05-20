@@ -210,13 +210,13 @@ public class ChocoMiner implements Miner {
             TransactionalDatabase database = readTransactionalDatabase(datasetPath);
             int maxSupport = parseMinSupport(params, database);
             
-            // minSupport is excluded as upperbound   
+            // maxSupport is excluded as upperbound   
             if (maxSupport <= 1) {
                 throw new ParameterException(
-                        "For rare itemset mining, minSupport must result in a value greater than 1");
+                        "For rare itemset mining, maxSupport must result in a value greater than 1");
             }
 
-            LOGGER.info("Starting rare itemset mining with minSupport: " + maxSupport);
+            LOGGER.info("Starting rare itemset mining with maxSupport: " + maxSupport);
 
             Model model = new Model("Rare Itemset Mining");
             BoolVar[] x = model.boolVarArray("x", database.getNbItems());
