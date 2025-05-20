@@ -120,10 +120,10 @@ public class SpmfMiner implements Miner {
     @Override
     public List<MiningResult> extractRare(String datasetPath, Map<String, String> params) throws MiningException {
         try {
-            validateParams(params, "minSupport");
-            Double minSupport = parseMinSupport(params);
+            validateParams(params, "maxSupport");
+            Double maxSupport = parseMaxSupport(params);
             AlgoRPGrowth algo = new AlgoRPGrowth();
-            Itemsets itemsets = algo.runAlgorithm(fileToPath(datasetPath), null, minSupport, 0);
+            Itemsets itemsets = algo.runAlgorithm(fileToPath(datasetPath), null, maxSupport, 0);
             return ConvertToMiningResult.convertItemsetsToMiningResults(itemsets);
         } catch (ParameterException | DatabaseException e) {
             throw e;
@@ -166,10 +166,10 @@ public class SpmfMiner implements Miner {
     @Override
     public List<MiningResult> extractMinimal(String datasetPath, Map<String, String> params) throws MiningException {
         try {
-            validateParams(params, "minSupport");
-            Double minSupport = parseMinSupport(params);
+            validateParams(params, "maxSupport");
+            Double maxSupport = parseMaxSupport(params);
             AlgoAprioriRare algo = new AlgoAprioriRare();
-            Itemsets itemsets = algo.runAlgorithm(minSupport, fileToPath(datasetPath), null);
+            Itemsets itemsets = algo.runAlgorithm(maxSupport, fileToPath(datasetPath), null);
             return ConvertToMiningResult.convertItemsetsToMiningResults(itemsets);
         } catch (ParameterException | DatabaseException e) {
             throw e;
