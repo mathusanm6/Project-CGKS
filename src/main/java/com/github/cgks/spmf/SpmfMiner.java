@@ -296,7 +296,7 @@ public class SpmfMiner implements Miner {
         } catch (ParameterException | DatabaseException e) {
             throw e; 
         } catch (Exception e) {
-            throw new MiningException("Unexpected error in extractPresence: " + e.getMessage(), e);
+            throw new MiningException("Unexpected error in extractAbsence: " + e.getMessage(), e);
         }
     }
 
