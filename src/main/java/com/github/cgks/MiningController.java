@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
 @RequestMapping("/mine") // L'URL de base de l'API : http://localhost:8080/mine
-@CrossOrigin // Autorise les appels depuis ton frontend React
+@CrossOrigin // Autorise les appels depuis React
 public class MiningController {
 
     @PostMapping
