@@ -533,7 +533,7 @@ class ChocoMinerTest {
         @DisplayName("MaxSupport derived from 0.4 (maxSupport < 0.4, i.e. freq < 2) - Should find minimal rare itemsets")
         void testExtractMinimal_MaxSupport40Percent() {
             assertTimeoutPreemptively(OPERATION_TIMEOUT, () -> {
-                Map<String, String> params = Parameters.empty().withParam(MIN_SUPPORT_PARAM, 0.4).getHashMap();
+                Map<String, String> params = Parameters.empty().withParam(MAX_SUPPORT_PARAM, 0.4).getHashMap();
                 List<MiningResult> results = miner.extractMinimal(datasetPath, params);
 
                 assertNotNull(results, "Results should not be null");
@@ -551,7 +551,7 @@ class ChocoMinerTest {
         @DisplayName("MaxSupport derived from 0.7 (maxSupport < 0.7, i.e. freq < ceil(5*0.7)=4) - Should find minimal rare itemsets with support < 0.7")
         void testExtractMinimal_MaxSupport70Percent() {
             assertTimeoutPreemptively(OPERATION_TIMEOUT, () -> {
-                Map<String, String> params = Parameters.empty().withParam(MIN_SUPPORT_PARAM, 0.7).getHashMap();
+                Map<String, String> params = Parameters.empty().withParam(MAX_SUPPORT_PARAM, 0.7).getHashMap();
                 List<MiningResult> results = miner.extractMinimal(datasetPath, params);
 
                 assertNotNull(results, "Results should not be null");
@@ -571,7 +571,7 @@ class ChocoMinerTest {
         @Test
         @DisplayName("Invalid parameters - Too low support threshold")
         void testExtractMinimal_TooLowSupport() {
-            Map<String, String> params = Parameters.empty().withParam(MIN_SUPPORT_PARAM, -1).getHashMap();
+            Map<String, String> params = Parameters.empty().withParam(MAX_SUPPORT_PARAM, 0.1).getHashMap();
             assertThrows(ParameterException.class, () -> miner.extractMinimal(datasetPath, params));
         }
     }

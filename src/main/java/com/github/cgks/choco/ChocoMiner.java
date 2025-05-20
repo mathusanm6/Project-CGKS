@@ -66,6 +66,26 @@ public class ChocoMiner implements Miner {
             throw new ParameterException("Invalid minSupport value: " + params.get("minSupport"));
         }
     }
+    
+    /**
+     * Validates and parses the maximum support parameter.
+     *
+     * @param params   The parameters map
+     * @param database The transactional database
+     * @return The calculated maximum support value
+     * @throws ParameterException If the maxSupport parameter is invalid
+     */
+    private int parseMaxSupport(Map<String, String> params, TransactionalDatabase database) throws ParameterException {
+        try {
+            double maxSupportRatio = Double.parseDouble(params.get("maxSupport"));
+            if (maxSupportRatio <= 0.0 || maxSupportRatio > 1.0) {
+                throw new ParameterException("maxSupport must be between 0.0 (exclusive) and 1.0 (inclusive)");
+            }
+            return (int) Math.ceil(database.getNbTransactions() * maxSupportRatio);
+        } catch (NumberFormatException e) {
+            throw new ParameterException("Invalid maxSupport value: " + params.get("maxSupport"));
+        }
+    }
 
     @Override
     public List<MiningResult> extractFrequent(String datasetPath, Map<String, String> params) throws MiningException {
@@ -204,11 +224,11 @@ public class ChocoMiner implements Miner {
     @Override
     public List<MiningResult> extractRare(String datasetPath, Map<String, String> params) throws MiningException {
         try {
-            validateParams(params, "minSupport");
+            validateParams(params, "maxSupport");
 
             // Read the transactional database
             TransactionalDatabase database = readTransactionalDatabase(datasetPath);
-            int maxSupport = parseMinSupport(params, database);
+            int maxSupport = parseMaxSupport(params, database);
             
             // maxSupport is excluded as upperbound   
             if (maxSupport <= 1) {
@@ -330,27 +350,27 @@ public class ChocoMiner implements Miner {
     @Override
     public List<MiningResult> extractMinimal(String datasetPath, Map<String, String> params) throws MiningException {
         try {
-            validateParams(params, "minSupport");
+            validateParams(params, "maxSupport");
 
             // Read the transactional database
             TransactionalDatabase database = readTransactionalDatabase(datasetPath);
-            int minSupport = parseMinSupport(params, database);
+            int maxSupport = parseMaxSupport(params, database);
 
-            if (minSupport <= 1) {
+            if (maxSupport <= 1) {
                 throw new ParameterException(
-                        "For minimal itemset mining, minSupport must result in a value greater than 1");
+                        "For minimal itemset mining, maxSupport must result in a value greater than 1");
             }
 
-            LOGGER.info("Starting minimal itemset mining with minSupport: " + minSupport);
+            LOGGER.info("Starting minimal itemset mining with maxSupport: " + maxSupport);
 
             Model model = new Model("Minimal Itemset Mining");
             BoolVar[] x = model.boolVarArray("x", database.getNbItems());
             IntVar freq = model.intVar("freq", 1, database.getNbTransactions());
 
             // Post constraints
-            model.arithm(freq, "<", minSupport).post();
+            model.arithm(freq, "<", maxSupport).post();
             ConstraintFactory.coverSize(database, freq, x).post();
-            ConstraintFactory.frequentSubs(database, minSupport, x).post();
+            ConstraintFactory.frequentSubs(database, maxSupport, x).post();
 
             Solver solver = model.getSolver();
             List<MiningResult> results = new ArrayList<>();
