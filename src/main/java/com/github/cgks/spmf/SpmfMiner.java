@@ -394,7 +394,7 @@ public class SpmfMiner implements Miner {
             for (List<Itemset> level : itemsets.getLevels()) {
                 checkCancellation(cancellationChecker);
                 for (Itemset itemset : level) {
-                    if (!containsAllRequired(itemset, sortedExcluded)) {
+                    if (!containsAny(itemset, sortedExcluded)) {
                         results.addItemset(itemset, itemset.size());
                     }
                 }
