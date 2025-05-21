@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -57,10 +58,10 @@ import ca.pfv.spmf.patterns.itemset_array_integers_with_count.Itemsets;
  * Example usage:
  * 
  * <pre>
- *     SpmfMiner miner = new SpmfMiner();
- *     Map<String, String>; params = new HashMap<>();
- *     params.put("minSupport", "0.5");
- *     List<MiningResult> results = miner.extractFrequent("dataset.txt", params);
+ * SpmfMiner miner = new SpmfMiner();
+ * Map<String, String> params = new HashMap<>();
+ * params.put("minSupport", "0.5");
+ * List<MiningResult> results = miner.extractFrequent("dataset.txt", params, () -> false);
  * </pre>
  *
  * @author CGKS team
@@ -71,78 +72,131 @@ public class SpmfMiner implements Miner {
 
     private static final Logger LOGGER = Logger.getLogger(SpmfMiner.class.getName());
 
+    private void checkCancellation(BooleanSupplier cancellationChecker) throws InterruptedException {
+        if (cancellationChecker.getAsBoolean()) {
+            LOGGER.info("SPMF Mining task cancelled");
+            throw new InterruptedException("Mining task was cancelled by user.");
+        }
+    }
+
     @Override
-    public List<MiningResult> extractFrequent(String datasetPath, Map<String, String> params) throws MiningException {
+    public List<MiningResult> extractFrequent(String datasetPath, Map<String, String> params,
+            BooleanSupplier cancellationChecker) throws MiningException {
         try {
+            checkCancellation(cancellationChecker);
             validateParams(params, "minSupport");
             Dataset dataset = pathToDataset(datasetPath);
             Double minSupport = parseMinSupport(params);
             AlgoLCMFreq algo = new AlgoLCMFreq();
+            checkCancellation(cancellationChecker);
             Itemsets itemsets = algo.runAlgorithm(minSupport, dataset, null);
+            checkCancellation(cancellationChecker);
             return ConvertToMiningResult.convertItemsetsToMiningResults(itemsets);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new MiningException("Mining task was cancelled by user.", e);
         } catch (ParameterException | DatabaseException e) {
             throw e;
         } catch (Exception e) {
+            if (cancellationChecker.getAsBoolean()) {
+                throw new MiningException("Mining task was cancelled during operation.", e);
+            }
             throw new MiningException("Unexpected error in extractFrequent: " + e.getMessage(), e);
         }
     }
 
     @Override
-    public List<MiningResult> extractClosed(String datasetPath, Map<String, String> params) throws MiningException {
+    public List<MiningResult> extractClosed(String datasetPath, Map<String, String> params,
+            BooleanSupplier cancellationChecker) throws MiningException {
         try {
+            checkCancellation(cancellationChecker);
             validateParams(params, "minSupport");
             Dataset dataset = pathToDataset(datasetPath);
             Double minSupport = parseMinSupport(params);
             AlgoLCM algo = new AlgoLCM();
+            checkCancellation(cancellationChecker);
             Itemsets itemsets = algo.runAlgorithm(minSupport, dataset, null);
+            checkCancellation(cancellationChecker);
             return ConvertToMiningResult.convertItemsetsToMiningResults(itemsets);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new MiningException("Mining task was cancelled by user.", e);
         } catch (ParameterException | DatabaseException e) {
             throw e;
         } catch (Exception e) {
+            if (cancellationChecker.getAsBoolean()) {
+                throw new MiningException("Mining task was cancelled during operation.", e);
+            }
             throw new MiningException("Unexpected error in extractClosed: " + e.getMessage(), e);
         }
     }
 
     @Override
-    public List<MiningResult> extractMaximal(String datasetPath, Map<String, String> params) throws MiningException {
+    public List<MiningResult> extractMaximal(String datasetPath, Map<String, String> params,
+            BooleanSupplier cancellationChecker) throws MiningException {
         try {
+            checkCancellation(cancellationChecker);
             validateParams(params, "minSupport");
             Double minSupport = parseMinSupport(params);
+            String inputPath = fileToPath(datasetPath); // Resolve path once
             AlgoFPMax algo = new AlgoFPMax();
-            Itemsets itemsets = algo.runAlgorithm(fileToPath(datasetPath), null, minSupport);
+            checkCancellation(cancellationChecker);
+            Itemsets itemsets = algo.runAlgorithm(inputPath, null, minSupport);
+            checkCancellation(cancellationChecker);
             return ConvertToMiningResult.convertItemsetsToMiningResults(itemsets);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new MiningException("Mining task was cancelled by user.", e);
         } catch (ParameterException | DatabaseException e) {
             throw e;
         } catch (Exception e) {
+            if (cancellationChecker.getAsBoolean()) {
+                throw new MiningException("Mining task was cancelled during operation.", e);
+            }
             throw new MiningException("Unexpected error in extractMaximal: " + e.getMessage(), e);
         }
     }
 
     @Override
-    public List<MiningResult> extractRare(String datasetPath, Map<String, String> params) throws MiningException {
+    public List<MiningResult> extractRare(String datasetPath, Map<String, String> params,
+            BooleanSupplier cancellationChecker) throws MiningException {
         try {
-            validateParams(params, "maxSupport");
+            checkCancellation(cancellationChecker);
+            validateParams(params, "maxSupport"); // RPGrowth uses maxSupport
             Double maxSupport = parseMaxSupport(params);
             AlgoRPGrowth algo = new AlgoRPGrowth();
+            checkCancellation(cancellationChecker);
             Itemsets itemsets = algo.runAlgorithm(fileToPath(datasetPath), null, maxSupport, 0);
+            checkCancellation(cancellationChecker);
             return ConvertToMiningResult.convertItemsetsToMiningResults(itemsets);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new MiningException("Mining task was cancelled by user.", e);
         } catch (ParameterException | DatabaseException e) {
             throw e;
         } catch (Exception e) {
-            throw new MiningException("Unexpected error in extractRare: " + e.getMessage(), e);
+            if (cancellationChecker.getAsBoolean()) {
+                throw new MiningException("Mining task was cancelled during operation.", e);
+            }
+            throw new MiningException("Unexpected error in extractMaximal: " + e.getMessage(), e);
         }
     }
 
     @Override
-    public List<MiningResult> extractGenerators(String datasetPath, Map<String, String> params) throws MiningException {
+    public List<MiningResult> extractGenerators(String datasetPath, Map<String, String> params,
+            BooleanSupplier cancellationChecker) throws MiningException {
         try {
+            checkCancellation(cancellationChecker);
             validateParams(params, "minSupport");
             TransactionDatabase context = readTransactionDatabase(datasetPath);
             Double minSupport = parseMinSupport(params);
             AlgoZart algo = new AlgoZart();
+            checkCancellation(cancellationChecker);
             TZTableClosed results = algo.runAlgorithm(context, minSupport);
+            checkCancellation(cancellationChecker);
             Itemsets itemsets = new Itemsets("Generator itemset");
             for (int i = 1; i < results.levels.size(); i++) {
+                checkCancellation(cancellationChecker);
                 for (Itemset closed : results.levels.get(i)) {
                     List<Itemset> generators = results.mapGenerators.get(closed);
                     // if there are some generators
@@ -157,32 +211,49 @@ public class SpmfMiner implements Miner {
                 }
             }
             return ConvertToMiningResult.convertItemsetsToMiningResults(itemsets);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new MiningException("Mining task was cancelled by user.", e);
         } catch (ParameterException | DatabaseException e) {
             throw e;
         } catch (Exception e) {
+            if (cancellationChecker.getAsBoolean()) {
+                throw new MiningException("Mining task was cancelled during operation.", e);
+            }
             throw new MiningException("Unexpected error in extractGenerators: " + e.getMessage(), e);
         }
     }
 
     @Override
-    public List<MiningResult> extractMinimal(String datasetPath, Map<String, String> params) throws MiningException {
+    public List<MiningResult> extractMinimal(String datasetPath, Map<String, String> params,
+            BooleanSupplier cancellationChecker) throws MiningException {
         try {
+            checkCancellation(cancellationChecker);
             validateParams(params, "maxSupport");
             Double maxSupport = parseMaxSupport(params);
             AlgoAprioriRare algo = new AlgoAprioriRare();
+            checkCancellation(cancellationChecker);
             Itemsets itemsets = algo.runAlgorithm(maxSupport, fileToPath(datasetPath), null);
+            checkCancellation(cancellationChecker);
             return ConvertToMiningResult.convertItemsetsToMiningResults(itemsets);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new MiningException("Mining task was cancelled by user.", e);
         } catch (ParameterException | DatabaseException e) {
             throw e;
         } catch (Exception e) {
+            if (cancellationChecker.getAsBoolean()) {
+                throw new MiningException("Mining task was cancelled during operation.", e);
+            }
             throw new MiningException("Unexpected error in extractMinimal: " + e.getMessage(), e);
         }
     }
 
     @Override
-    public List<MiningResult> extractSizeBetween(String datasetPath, Map<String, String> params)
-            throws MiningException {
+    public List<MiningResult> extractSizeBetween(String datasetPath, Map<String, String> params,
+            BooleanSupplier cancellationChecker) throws MiningException {
         try {
+            checkCancellation(cancellationChecker);
             validateParams(params, "minSize", "maxSize", "minSupport");
             Dataset dataset = pathToDataset(datasetPath);
             int datasetSize = dataset.getTransactions().size();
@@ -211,12 +282,13 @@ public class SpmfMiner implements Miner {
             }
 
             AlgoLCM algo = new AlgoLCM();
+            checkCancellation(cancellationChecker);
             Itemsets itemsets = algo.runAlgorithm(minSupport, dataset, null);
+            checkCancellation(cancellationChecker);
 
-            Itemsets results = new Itemsets(
-                    String.format("Itemsets de taille %d à %d", minSize, maxSize));
-
+            Itemsets results = new Itemsets(String.format("Itemsets de taille %d à %d", minSize, maxSize));
             for (List<Itemset> level : itemsets.getLevels()) {
+                checkCancellation(cancellationChecker);
                 for (Itemset itemset : level) {
                     int size = itemset.size();
                     if (size >= minSize && size <= maxSize) {
@@ -224,25 +296,35 @@ public class SpmfMiner implements Miner {
                     }
                 }
             }
-
             return ConvertToMiningResult.convertItemsetsToMiningResults(results);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new MiningException("Mining task was cancelled by user.", e);
         } catch (ParameterException | DatabaseException e) {
             throw e;
         } catch (Exception e) {
+            if (cancellationChecker.getAsBoolean()) {
+                throw new MiningException("Mining task was cancelled during operation.", e);
+            }
             throw new MiningException("Unexpected error in extractSizeBetween: " + e.getMessage(), e);
         }
     }
 
     @Override
-    public List<MiningResult> extractPresence(String datasetPath, Map<String, String> params) throws Exception {
+    public List<MiningResult> extractPresence(String datasetPath, Map<String, String> params,
+            BooleanSupplier cancellationChecker) throws MiningException {
         try {
+            checkCancellation(cancellationChecker);
             validateParams(params, "minSupport", "items");
             Double minSupport = parseMinSupport(params);
             String param = params.get("items");
             List<Integer> requiredItems = parseItems(param);
             Dataset dataset = pathToDataset(datasetPath);
             AlgoLCM algo = new AlgoLCM();
+            checkCancellation(cancellationChecker);
             Itemsets itemsets = algo.runAlgorithm(minSupport, dataset, null);
+            checkCancellation(cancellationChecker);
+
             Itemsets results = new Itemsets("Itemsets contenant tous: " + requiredItems);
 
             Set<Integer> datasetItems = dataset.getUniqueItems();
@@ -261,29 +343,44 @@ public class SpmfMiner implements Miner {
             List<Integer> sortedRequired = new ArrayList<>(filteredRequiredItems);
             Collections.sort(sortedRequired);
 
-            // Parcours optimisé avec stream
-            itemsets.getLevels().forEach(level -> level.stream()
-                    .filter(itemset -> containsAllRequired(itemset, sortedRequired))
-                    .forEach(itemset -> results.addItemset(itemset, itemset.size())));
+            // Filter itemsets, checking for cancellation periodically
+            for (List<Itemset> level : itemsets.getLevels()) {
+                checkCancellation(cancellationChecker);
+                for (Itemset itemset : level) {
+                    if (containsAllRequired(itemset, sortedRequired)) {
+                        results.addItemset(itemset, itemset.size());
+                    }
+                }
+            }
 
             return ConvertToMiningResult.convertItemsetsToMiningResults(results);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new MiningException("Mining task was cancelled by user.", e);
         } catch (ParameterException | DatabaseException e) {
             throw e;
         } catch (Exception e) {
+            if (cancellationChecker.getAsBoolean()) {
+                throw new MiningException("Mining task was cancelled during operation.", e);
+            }
             throw new MiningException("Unexpected error in extractPresence: " + e.getMessage(), e);
         }
     }
 
     @Override
-    public List<MiningResult> extractAbsence(String datasetPath, Map<String, String> params) throws Exception {
+    public List<MiningResult> extractAbsence(String datasetPath, Map<String, String> params,
+            BooleanSupplier cancellationChecker) throws MiningException {
         try {
+            checkCancellation(cancellationChecker);
             validateParams(params, "minSupport", "items");
             Double minSupport = parseMinSupport(params);
-            String param = params.get("items");
-            List<Integer> excludedItems = parseItems(param);
+            List<Integer> excludedItems = parseItems(params.get("items"));
             Dataset dataset = pathToDataset(datasetPath);
+
             AlgoLCM algo = new AlgoLCM();
+            checkCancellation(cancellationChecker);
             Itemsets itemsets = algo.runAlgorithm(minSupport, dataset, null);
+            checkCancellation(cancellationChecker);
 
             Itemsets results = new Itemsets("Itemsets sans: " + excludedItems);
 
@@ -294,14 +391,25 @@ public class SpmfMiner implements Miner {
             List<Integer> sortedExcluded = new ArrayList<>(excludedItems);
             Collections.sort(sortedExcluded);
 
-            itemsets.getLevels().forEach(level -> level.stream()
-                    .filter(itemset -> !containsAny(itemset.getItems(), sortedExcluded))
-                    .forEach(itemset -> results.addItemset(itemset, itemset.size())));
+            for (List<Itemset> level : itemsets.getLevels()) {
+                checkCancellation(cancellationChecker);
+                for (Itemset itemset : level) {
+                    if (!containsAllRequired(itemset, sortedExcluded)) {
+                        results.addItemset(itemset, itemset.size());
+                    }
+                }
+            }
 
             return ConvertToMiningResult.convertItemsetsToMiningResults(results);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new MiningException("Mining task was cancelled by user.", e);
         } catch (ParameterException | DatabaseException e) {
             throw e;
         } catch (Exception e) {
+            if (cancellationChecker.getAsBoolean()) {
+                throw new MiningException("Mining task was cancelled during operation.", e);
+            }
             throw new MiningException("Unexpected error in extractAbsence: " + e.getMessage(), e);
         }
     }

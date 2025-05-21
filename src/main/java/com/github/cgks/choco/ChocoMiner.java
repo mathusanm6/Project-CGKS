@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
+import java.util.function.BooleanSupplier;
 import java.util.stream.IntStream;
 
 import org.chocosolver.solver.Model;
@@ -31,6 +32,19 @@ import io.gitlab.chaver.mining.patterns.io.TransactionalDatabase;
 public class ChocoMiner implements Miner {
 
     private static final Logger LOGGER = Logger.getLogger(ChocoMiner.class.getName());
+
+    /**
+     * Helper method to check for cancellation and interrupt if needed.
+     * 
+     * @param cancellationChecker The supplier to check for cancellation.
+     * @throws InterruptedException If cancellation is requested.
+     */
+    private void checkCancellation(BooleanSupplier cancellationChecker) throws InterruptedException {
+        if (cancellationChecker.getAsBoolean()) {
+            LOGGER.info("Cancellation requested, interrupting mining process.");
+            throw new InterruptedException("Mining process cancelled by user.");
+        }
+    }
 
     /**
      * Validates that required parameters are present.
@@ -66,7 +80,7 @@ public class ChocoMiner implements Miner {
             throw new ParameterException("Invalid minSupport value: " + params.get("minSupport"));
         }
     }
-    
+
     /**
      * Validates and parses the maximum support parameter.
      *
@@ -88,8 +102,10 @@ public class ChocoMiner implements Miner {
     }
 
     @Override
-    public List<MiningResult> extractFrequent(String datasetPath, Map<String, String> params) throws MiningException {
+    public List<MiningResult> extractFrequent(String datasetPath, Map<String, String> params,
+            BooleanSupplier cancellationChecker) throws MiningException {
         try {
+            checkCancellation(cancellationChecker);
             validateParams(params, "minSupport");
 
             // Read the transactional database
@@ -111,6 +127,7 @@ public class ChocoMiner implements Miner {
 
             try {
                 while (solver.solve()) {
+                    checkCancellation(cancellationChecker);
                     MiningResult result = getMiningResult(database, x, freq);
                     results.add(result);
                 }
@@ -124,16 +141,26 @@ public class ChocoMiner implements Miner {
             filterOutEmptyItemsets(results);
 
             return results;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOGGER.info("Frequent itemset mining cancelled.");
+            throw new MiningException("Mining cancelled by user.", e);
         } catch (ParameterException | DatabaseException e) {
-            throw e; // Re-throw specific exceptions
+            throw e;
         } catch (Exception e) {
+            if (cancellationChecker.getAsBoolean()) {
+                LOGGER.info("Frequent itemset mining cancelled during operation.");
+                throw new MiningException("Mining cancelled by user.", e);
+            }
             throw new MiningException("Unexpected error in extractFrequent: " + e.getMessage(), e);
         }
     }
 
     @Override
-    public List<MiningResult> extractClosed(String datasetPath, Map<String, String> params) throws MiningException {
+    public List<MiningResult> extractClosed(String datasetPath, Map<String, String> params,
+            BooleanSupplier cancellationChecker) throws MiningException {
         try {
+            checkCancellation(cancellationChecker);
             validateParams(params, "minSupport");
 
             // Read the transactional database
@@ -150,14 +177,16 @@ public class ChocoMiner implements Miner {
             model.arithm(freq, ">=", minSupport).post();
             ConstraintFactory.coverSize(database, freq, x).post();
             ConstraintFactory.coverClosure(database, x).post();
-
             Solver solver = model.getSolver();
             List<MiningResult> results = new ArrayList<>();
 
             try {
                 while (solver.solve()) {
-                    MiningResult result = getMiningResult(database, x, freq);
-                    results.add(result);
+                    while (solver.solve()) {
+                        checkCancellation(cancellationChecker);
+                        MiningResult result = getMiningResult(database, x, freq);
+                        results.add(result);
+                    }
                 }
             } catch (Exception e) {
                 throw new MiningException("Error during solving process: " + e.getMessage(), e);
@@ -169,16 +198,26 @@ public class ChocoMiner implements Miner {
             filterOutEmptyItemsets(results);
 
             return results;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOGGER.info("Closed itemset mining cancelled.");
+            throw new MiningException("Mining cancelled by user.", e);
         } catch (ParameterException | DatabaseException e) {
-            throw e; // Re-throw specific exceptions
+            throw e;
         } catch (Exception e) {
+            if (cancellationChecker.getAsBoolean()) {
+                LOGGER.info("Closed itemset mining cancelled during operation.");
+                throw new MiningException("Mining cancelled by user.", e);
+            }
             throw new MiningException("Unexpected error in extractClosed: " + e.getMessage(), e);
         }
     }
 
     @Override
-    public List<MiningResult> extractMaximal(String datasetPath, Map<String, String> params) throws MiningException {
+    public List<MiningResult> extractMaximal(String datasetPath, Map<String, String> params,
+            BooleanSupplier cancellationChecker) throws MiningException {
         try {
+            checkCancellation(cancellationChecker);
             validateParams(params, "minSupport");
 
             // Read the transactional database
@@ -201,6 +240,7 @@ public class ChocoMiner implements Miner {
 
             try {
                 while (solver.solve()) {
+                    checkCancellation(cancellationChecker);
                     MiningResult result = getMiningResult(database, x, freq);
                     results.add(result);
                 }
@@ -214,23 +254,33 @@ public class ChocoMiner implements Miner {
             filterOutEmptyItemsets(results);
 
             return results;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOGGER.info("Maximal itemset mining cancelled.");
+            throw new MiningException("Mining cancelled by user.", e);
         } catch (ParameterException | DatabaseException e) {
-            throw e; // Re-throw specific exceptions
+            throw e;
         } catch (Exception e) {
+            if (cancellationChecker.getAsBoolean()) {
+                LOGGER.info("Maximal itemset mining cancelled during operation.");
+                throw new MiningException("Mining cancelled by user.", e);
+            }
             throw new MiningException("Unexpected error in extractMaximal: " + e.getMessage(), e);
         }
     }
 
     @Override
-    public List<MiningResult> extractRare(String datasetPath, Map<String, String> params) throws MiningException {
+    public List<MiningResult> extractRare(String datasetPath, Map<String, String> params,
+            BooleanSupplier cancellationChecker) throws MiningException {
         try {
+            checkCancellation(cancellationChecker);
             validateParams(params, "maxSupport");
 
             // Read the transactional database
             TransactionalDatabase database = readTransactionalDatabase(datasetPath);
             int maxSupport = parseMaxSupport(params, database);
-            
-            // maxSupport is excluded as upperbound   
+
+            // maxSupport is excluded as upperbound
             if (maxSupport <= 1) {
                 throw new ParameterException(
                         "For rare itemset mining, maxSupport must result in a value greater than 1");
@@ -243,6 +293,7 @@ public class ChocoMiner implements Miner {
             IntVar freq = model.intVar("freq", 1, database.getNbTransactions());
 
             Solver solver = model.getSolver();
+
             // Post constraint
             model.arithm(freq, "<", maxSupport).post();
             ConstraintFactory.coverSize(database, freq, x).post();
@@ -251,17 +302,20 @@ public class ChocoMiner implements Miner {
             // First, identify rare items (items with support < maxSupport)
             boolean[] rareItems = new boolean[database.getNbItems()];
             while (solver.solve()) {
+                checkCancellation(cancellationChecker);
                 int[] itemset = IntStream.range(0, x.length)
-                .filter(i -> x[i].getValue() == 1)
-                .map(i -> database.getItems()[i])
-                .toArray();
-                if(itemset.length<=1) rareItems[itemset[0]-1]=true;
-            }   
-            int index = 0;  
-            for(boolean b: rareItems){
-                if(b){
-                    System.err.println("rare set of size 1 : " + (index+1));
+                        .filter(i -> x[i].getValue() == 1)
+                        .map(i -> database.getItems()[i])
+                        .toArray();
+                if (itemset.length <= 1)
+                    rareItems[itemset[0] - 1] = true;
+            }
+            int index = 0;
+            for (boolean b : rareItems) {
+                if (b) {
+                    System.err.println("rare set of size 1 : " + (index + 1));
                 }
+                checkCancellation(cancellationChecker);
                 index++;
             }
             solver.reset();
@@ -282,6 +336,7 @@ public class ChocoMiner implements Miner {
 
             try {
                 while (solver.solve()) {
+                    checkCancellation(cancellationChecker);
                     MiningResult result = getMiningResult(database, x, freq);
                     results.add(result);
                 }
@@ -295,16 +350,26 @@ public class ChocoMiner implements Miner {
             filterOutEmptyItemsets(results);
 
             return results;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOGGER.info("Rare itemset mining cancelled.");
+            throw new MiningException("Mining cancelled by user.", e);
         } catch (ParameterException | DatabaseException e) {
-            throw e; // Re-throw specific exceptions
+            throw e;
         } catch (Exception e) {
+            if (cancellationChecker.getAsBoolean()) {
+                LOGGER.info("Rare itemset mining cancelled during operation.");
+                throw new MiningException("Mining cancelled by user.", e);
+            }
             throw new MiningException("Unexpected error in extractRare: " + e.getMessage(), e);
         }
     }
 
     @Override
-    public List<MiningResult> extractGenerators(String datasetPath, Map<String, String> params) throws MiningException {
+    public List<MiningResult> extractGenerators(String datasetPath, Map<String, String> params,
+            BooleanSupplier cancellationChecker) throws MiningException {
         try {
+            checkCancellation(cancellationChecker);
             validateParams(params, "minSupport");
 
             // Read the transactional database
@@ -327,6 +392,7 @@ public class ChocoMiner implements Miner {
 
             try {
                 while (solver.solve()) {
+                    checkCancellation(cancellationChecker);
                     MiningResult result = getMiningResult(database, x, freq);
                     results.add(result);
                 }
@@ -340,16 +406,26 @@ public class ChocoMiner implements Miner {
             filterOutEmptyItemsets(results);
 
             return results;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOGGER.info("Generators mining cancelled.");
+            throw new MiningException("Mining cancelled by user.", e);
         } catch (ParameterException | DatabaseException e) {
-            throw e; // Re-throw specific exceptions
+            throw e;
         } catch (Exception e) {
+            if (cancellationChecker.getAsBoolean()) {
+                LOGGER.info("Generators mining cancelled during operation.");
+                throw new MiningException("Mining cancelled by user.", e);
+            }
             throw new MiningException("Unexpected error in extractGenerators: " + e.getMessage(), e);
         }
     }
 
     @Override
-    public List<MiningResult> extractMinimal(String datasetPath, Map<String, String> params) throws MiningException {
+    public List<MiningResult> extractMinimal(String datasetPath, Map<String, String> params,
+            BooleanSupplier cancellationChecker) throws MiningException {
         try {
+            checkCancellation(cancellationChecker);
             validateParams(params, "maxSupport");
 
             // Read the transactional database
@@ -377,6 +453,7 @@ public class ChocoMiner implements Miner {
 
             try {
                 while (solver.solve()) {
+                    checkCancellation(cancellationChecker);
                     MiningResult result = getMiningResult(database, x, freq);
                     results.add(result);
                 }
@@ -390,17 +467,26 @@ public class ChocoMiner implements Miner {
             filterOutEmptyItemsets(results);
 
             return results;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOGGER.info("Minimal itemset mining cancelled.");
+            throw new MiningException("Mining cancelled by user.", e);
         } catch (ParameterException | DatabaseException e) {
-            throw e; // Re-throw specific exceptions
+            throw e;
         } catch (Exception e) {
+            if (cancellationChecker.getAsBoolean()) {
+                LOGGER.info("Minimal itemset mining cancelled during operation.");
+                throw new MiningException("Mining cancelled by user.", e);
+            }
             throw new MiningException("Unexpected error in extractMinimal: " + e.getMessage(), e);
         }
     }
 
     @Override
-    public List<MiningResult> extractSizeBetween(String datasetPath, Map<String, String> params)
-            throws MiningException {
+    public List<MiningResult> extractSizeBetween(String datasetPath, Map<String, String> params,
+            BooleanSupplier cancellationChecker) throws MiningException {
         try {
+            checkCancellation(cancellationChecker);
             validateParams(params, "minSize", "maxSize", "minSupport");
 
             // Read the transactional database
@@ -440,7 +526,7 @@ public class ChocoMiner implements Miner {
             model.sum(x, ">=", minSize).post();
             model.sum(x, "<=", maxSize).post();
             model.arithm(freq, ">=", minSupport).post();
-            
+
             // Adding the constraints for closed itemsets
             ConstraintFactory.coverSize(database, freq, x).post();
             ConstraintFactory.coverClosure(database, x).post();
@@ -450,6 +536,7 @@ public class ChocoMiner implements Miner {
 
             try {
                 while (solver.solve()) {
+                    checkCancellation(cancellationChecker);
                     MiningResult result = getMiningResult(database, x, freq);
                     results.add(result);
                 }
@@ -463,16 +550,26 @@ public class ChocoMiner implements Miner {
             filterOutEmptyItemsets(results);
 
             return results;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOGGER.info("SizeBetween itemset mining cancelled.");
+            throw new MiningException("Mining cancelled by user.", e);
         } catch (ParameterException | DatabaseException e) {
-            throw e; // Re-throw specific exceptions
+            throw e;
         } catch (Exception e) {
+            if (cancellationChecker.getAsBoolean()) {
+                LOGGER.info("SizeBetween itemset mining cancelled during operation.");
+                throw new MiningException("Mining cancelled by user.", e);
+            }
             throw new MiningException("Unexpected error in extractSizeBetween: " + e.getMessage(), e);
         }
     }
 
     @Override
-    public List<MiningResult> extractPresence(String datasetPath, Map<String, String> params) throws MiningException {
+    public List<MiningResult> extractPresence(String datasetPath, Map<String, String> params,
+            BooleanSupplier cancellationChecker) throws MiningException {
         try {
+            checkCancellation(cancellationChecker);
             validateParams(params, "items", "minSupport");
 
             // Read the transactional database
@@ -504,6 +601,7 @@ public class ChocoMiner implements Miner {
 
             try {
                 while (solver.solve()) {
+                    checkCancellation(cancellationChecker);
                     MiningResult result = getMiningResult(database, x, freq);
                     results.add(result);
                 }
@@ -517,16 +615,26 @@ public class ChocoMiner implements Miner {
             filterOutEmptyItemsets(results);
 
             return results;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOGGER.info("Presence constrained mining cancelled.");
+            throw new MiningException("Mining cancelled by user.", e);
         } catch (ParameterException | DatabaseException e) {
-            throw e; // Re-throw specific exceptions
+            throw e;
         } catch (Exception e) {
+            if (cancellationChecker.getAsBoolean()) {
+                LOGGER.info("Presence constrained mining cancelled during operation.");
+                throw new MiningException("Mining cancelled by user.", e);
+            }
             throw new MiningException("Unexpected error in extractPresence: " + e.getMessage(), e);
         }
     }
 
     @Override
-    public List<MiningResult> extractAbsence(String datasetPath, Map<String, String> params) throws MiningException {
+    public List<MiningResult> extractAbsence(String datasetPath, Map<String, String> params,
+            BooleanSupplier cancellationChecker) throws MiningException {
         try {
+            checkCancellation(cancellationChecker);
             validateParams(params, "items", "minSupport");
 
             // Read the transactional database
@@ -558,6 +666,7 @@ public class ChocoMiner implements Miner {
 
             try {
                 while (solver.solve()) {
+                    checkCancellation(cancellationChecker);
                     MiningResult result = getMiningResult(database, x, freq);
                     results.add(result);
                 }
@@ -571,9 +680,17 @@ public class ChocoMiner implements Miner {
             filterOutEmptyItemsets(results);
 
             return results;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOGGER.info("Absence constrained mining cancelled.");
+            throw new MiningException("Mining cancelled by user.", e);
         } catch (ParameterException | DatabaseException e) {
-            throw e; // Re-throw specific exceptions
+            throw e;
         } catch (Exception e) {
+            if (cancellationChecker.getAsBoolean()) {
+                LOGGER.info("Absence constrained mining cancelled during operation.");
+                throw new MiningException("Mining cancelled by user.", e);
+            }
             throw new MiningException("Unexpected error in extractAbsence: " + e.getMessage(), e);
         }
     }
@@ -673,8 +790,7 @@ public class ChocoMiner implements Miner {
      * @param results The list of mining results
      * @return The filtered list of mining results
      */
-    private List<MiningResult> filterOutEmptyItemsets(List<MiningResult> results) {
+    private void filterOutEmptyItemsets(List<MiningResult> results) {
         results.removeIf(result -> result.getPattern().isEmpty());
-        return results;
     }
 }

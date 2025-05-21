@@ -1,71 +1,76 @@
 import axios from "axios";
-import { GLOBAL_REQUEST_TIMEOUT } from "../constants";
 
 // Use environment variable for API base URL
 const API_BASE_URL =
   process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
 
-export const submitQuery = async (engine, dataset, queryType, params) => {
+export const submitTask = async (engine, dataset, queryType, params) => {
   try {
     // Process params for sending to the API
     const apiParams = { ...params };
 
-    // Simplified items processing - only trim if it's a string
+    // Only trim if it's a string
     if (apiParams.items) {
       apiParams.items = String(apiParams.items).trim();
     }
-
-    const response = await axios.post(
-      `${API_BASE_URL}/mine`,
-      {
-        engine,
-        dataset,
-        queryType,
-        params: apiParams,
-      },
-      {
-        timeout: GLOBAL_REQUEST_TIMEOUT,
-      }
-    );
-
+    const response = await axios.post(`${API_BASE_URL}/api/tasks`, {
+      engine,
+      dataset,
+      queryType,
+      params: apiParams,
+    });
     return {
       success: true,
-      data: response.data || [],
-      message:
-        response.data && response.data.length > 0
-          ? `Requête exécutée avec succès. ${response.data.length} motif(s) trouvé(s).`
-          : "Requête exécutée avec succès. Aucun motif trouvé pour les critères spécifiés.",
+      data: response.data,
+      message: "Task submitted successfully.",
     };
   } catch (error) {
-    console.error("API Error:", error);
-
-    let errorMessage =
-      "Une erreur inconnue s'est produite lors de l'exécution de la requête.";
-
-    if (
-      error.code === "ECONNABORTED" ||
-      (error.message && error.message.includes("timeout"))
-    ) {
-      errorMessage = `La requête a échoué: Le délai d'attente de ${
-        GLOBAL_REQUEST_TIMEOUT / 1000
-      } secondes a été dépassé. Le serveur n'a pas répondu à temps.`;
-    } else if (error.response) {
-      errorMessage = `Erreur du serveur: ${error.response.status} - ${
+    console.error("API Error (submitTask):", error);
+    let errorMessage = "Failed to submit task.";
+    if (error.response) {
+      errorMessage = `Error: ${error.response.status} - ${
         error.response.data?.message ||
-        error.response.statusText ||
-        "Réponse non valide du serveur"
+        error.response.data ||
+        error.response.statusText
       }`;
     } else if (error.request) {
-      errorMessage =
-        "La requête a été envoyée, mais aucune réponse n'a été reçue du serveur. Vérifiez la connexion réseau et l'état du serveur.";
+      errorMessage = "No response from server. Check network or server status.";
     } else {
-      errorMessage = `Erreur de configuration de la requête: ${error.message}`;
+      errorMessage = `Request setup error: ${error.message}`;
     }
+    return { success: false, data: null, message: errorMessage };
+  }
+};
 
+export const getTaskStatus = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/tasks/status`);
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error("API Error (getTaskStatus):", error);
+    // Avoid flooding with errors if server is temporarily down during polling
     return {
       success: false,
-      data: [],
-      message: errorMessage,
+      data: null,
+      message: "Could not fetch task status.",
     };
+  }
+};
+
+export const cancelTask = async () => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/api/tasks/cancel`);
+    return { success: true, message: response.data };
+  } catch (error) {
+    console.error("API Error (cancelTask):", error);
+    let errorMessage = "Failed to cancel task.";
+    if (error.response) {
+      errorMessage = `Error: ${error.response.status} - ${
+        error.response.data || error.response.statusText
+      }`;
+    } else if (error.request) {
+      errorMessage = "No response from server.";
+    }
+    return { success: false, message: errorMessage };
   }
 };

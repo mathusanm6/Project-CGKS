@@ -5,7 +5,7 @@ import DataForm from "./components/form/DataForm";
 import ResultsTable from "./components/results/ResultsTable";
 import { DatabaseIcon } from "./components/icons/Icons";
 import { useFormValidation } from "./hooks/useFormValidation";
-import { submitQuery } from "./services/ApiService";
+import { submitTask } from "./services/ApiService";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
 import { useContentHeight } from "./hooks/useContentHeight";
 
@@ -65,7 +65,7 @@ const App = () => {
     setResults([]);
     setIsFormModified(false);
 
-    const response = await submitQuery(engine, dataset, query, params);
+    const response = await submitTask(engine, dataset, query, params);
 
     if (response.success) {
       setResults(response.data);
