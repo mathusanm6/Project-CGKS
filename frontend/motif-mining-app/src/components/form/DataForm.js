@@ -1,6 +1,6 @@
 import React from "react";
 import { engines, datasets, queryTypes, queryTooltips } from "../../constants";
-import { FilterIcon, LoaderIcon, ChevronDownIcon, XIcon } from "../icons/Icons";
+import { FilterIcon, LoaderIcon, ChevronDownIcon } from "../icons/Icons";
 import Tooltip from "../ui/Tooltip";
 import FormFields from "./FormFields";
 import ErrorBoundary from "../ui/ErrorBoundary";
