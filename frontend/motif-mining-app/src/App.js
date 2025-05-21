@@ -60,10 +60,7 @@ const App = () => {
   useEffect(() => {
     clearAlertTimeout();
 
-    if (
-      alertMessage &&
-      (alertMessage.type === "success" || alertMessage.type === "info")
-    ) {
+    if (alertMessage && alertMessage.type === "success") {
       alertTimeoutRef.current = setTimeout(() => {
         setAlertMessage(null);
       }, 5000);
@@ -198,14 +195,12 @@ const App = () => {
 
     if (response.success && response.data) {
       setCurrentTask(response.data);
-      setAlertMessage({
-        type: "success",
-        message: response.message, // "Task submitted successfully."
-      });
-      setIsFormModified(false); // Mark form as "submitted"
-      setIsPolling(true); // Start polling for updates
-
+      // Only set alert if the task is immediately completed or failed
       if (response.data.status === "COMPLETED") {
+        setAlertMessage({
+          type: "success",
+          message: response.message, // "Task submitted successfully."
+        });
         setResults(response.data.result || []);
         setIsLoading(false); // Task completed immediately
         setIsPolling(false); // Stop polling
@@ -217,8 +212,8 @@ const App = () => {
         setIsLoading(false); // Task failed immediately
         setIsPolling(false); // Stop polling
       }
-      // If task is PENDING or PROCESSING, isLoading remains true.
-      // The polling useEffect will manage isLoading and results from this point.
+      setIsFormModified(false); // Mark form as "submitted"
+      setIsPolling(true); // Start polling for updates
     } else {
       // Submission itself failed (e.g., network error, API conflict, validation error from backend)
       setAlertMessage({
@@ -243,10 +238,8 @@ const App = () => {
   // Clear results and success/info alerts
   const clearResultsAndAlert = useCallback(() => {
     setResults([]);
-    if (
-      alertMessage &&
-      (alertMessage.type === "success" || alertMessage.type === "info")
-    ) {
+    // Only clear alert if it is a success (not info)
+    if (alertMessage && alertMessage.type === "success") {
       setAlertMessage(null);
     }
   }, [alertMessage]);
