@@ -86,11 +86,7 @@ public class MiningSelector {
             
             // Get frequency according to query
             Object support;
-            System.err.println("Query params");
-            System.err.println(request.getParams());
-            System.err.println(queryString);
             if((queryString.equals("minimal")) || (queryString.equals("rare"))){
-                System.err.println("get max support");
                 support = request.getParams().get("maxSupport");
             }else{
                 support = request.getParams().get("minSupport");
@@ -103,9 +99,6 @@ public class MiningSelector {
                 filename, 
                 support 
             );
-            System.err.println("Json computed params");
-            System.out.println(predictionFeatures);
-            System.out.println(predictionFeatures.keySet());
             
             // Get prediction from the API
             Integer prediction = requestPrediction(predictionFeatures);
