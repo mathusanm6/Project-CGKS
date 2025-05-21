@@ -13,6 +13,7 @@ import java.util.stream.IntStream;
 
 import org.chocosolver.solver.Model;
 import org.chocosolver.solver.Solver;
+import org.chocosolver.solver.search.strategy.Search;
 import org.chocosolver.solver.variables.BoolVar;
 import org.chocosolver.solver.variables.IntVar;
 
@@ -123,6 +124,7 @@ public class ChocoMiner implements Miner {
             ConstraintFactory.coverSize(database, freq, x).post();
 
             Solver solver = model.getSolver();
+            solver.setSearch(Search.inputOrderLBSearch(x));
             List<MiningResult> results = new ArrayList<>();
 
             try {
@@ -178,6 +180,7 @@ public class ChocoMiner implements Miner {
             ConstraintFactory.coverSize(database, freq, x).post();
             ConstraintFactory.coverClosure(database, x).post();
             Solver solver = model.getSolver();
+            solver.setSearch(Search.minDomUBSearch(x));
             List<MiningResult> results = new ArrayList<>();
 
             try {
@@ -234,6 +237,7 @@ public class ChocoMiner implements Miner {
             ConstraintFactory.infrequentSupers(database, minSupport, x).post();
 
             Solver solver = model.getSolver();
+            solver.setSearch(Search.inputOrderUBSearch(x));
             List<MiningResult> results = new ArrayList<>();
 
             try {
@@ -291,7 +295,7 @@ public class ChocoMiner implements Miner {
             IntVar freq = model.intVar("freq", 1, database.getNbTransactions());
 
             Solver solver = model.getSolver();
-
+            solver.setSearch(Search.minDomLBSearch(x));
             // Post constraint
             model.arithm(freq, "<", maxSupport).post();
             ConstraintFactory.coverSize(database, freq, x).post();
@@ -386,6 +390,7 @@ public class ChocoMiner implements Miner {
             ConstraintFactory.coverSize(database, freq, x).post();
 
             Solver solver = model.getSolver();
+            solver.setSearch(Search.inputOrderLBSearch(x));
             List<MiningResult> results = new ArrayList<>();
 
             try {
@@ -530,6 +535,7 @@ public class ChocoMiner implements Miner {
             ConstraintFactory.coverClosure(database, x).post();
 
             Solver solver = model.getSolver();
+            solver.setSearch(Search.minDomLBSearch(x));
             List<MiningResult> results = new ArrayList<>();
 
             try {
@@ -660,6 +666,7 @@ public class ChocoMiner implements Miner {
             ConstraintFactory.coverClosure(database, x).post();
 
             Solver solver = model.getSolver();
+            solver.setSearch(Search.inputOrderLBSearch(x));
             List<MiningResult> results = new ArrayList<>();
 
             try {
