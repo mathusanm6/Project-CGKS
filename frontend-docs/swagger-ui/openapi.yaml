@@ -1,393 +1,425 @@
 openapi: 3.1.0
 info:
   title: Itemset Mining API
-  version: 1.0.1
-  description: >
-    REST API for itemset mining queries using declarative constraints, supporting both Choco-Mining and SPMF backends.
-    Frontend provides structured constraints, while backend selects or adapts engines appropriately.
+  version: 1.1.0
+  description: |
+    REST API for submitting, monitoring, cancelling, and acknowledging itemset mining tasks.
+    This API is used by the frontend to interact with the mining backend. All endpoints return structured JSON responses.
+
+    **Note:** All endpoints are under `/api/tasks`.
 
 servers:
-  - url: https://api.itemsetmining.local
-    description: Development server
+  - url: http://localhost:8080
+    description: Local development server
 
 paths:
-  /queries/submit:
+  /api/tasks:
     post:
-      summary: Submit a new itemset mining query
-      description: >
-        Submit a query with constraints. The backend selects or configures the appropriate mining engine.
-        The `threshold` parameter is required and defines the minimum support for pattern selection.
+      summary: Submit a new mining task
+      description: |
+        Submits a new mining task. If a task is already running or pending, returns 409 Conflict.
+        The backend responds immediately with the created task object (status is usually `PENDING`).
+
+        **Example request:**
+        ```json
+        {
+          "engine": "spmf",
+          "dataset": "/data/contextPasquier99.dat",
+          "queryType": "frequent",
+          "params": {
+            "minSupport": 0.5
+          }
+        }
+        ```
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/QueryRequest"
+              $ref: "#/components/schemas/MiningTaskRequest"
             examples:
-              example-1:
+              basic:
+                summary: Frequent itemset mining task
                 value:
-                  dataset: mushroom.csv
-                  engine: auto
-                  threshold: 0.2
-                  thresholdType: percentage
-                  patternType:
-                    frequency: frequent
-                    border: maximal
-                    structure: ["closed"]
-                  itemConstraints:
-                    - attribute: category
-                      operator: in
-                      value: ["food", "cleaning"]
-                    - attribute: cost
-                      operator: "<="
-                      value: 15
-                  transactionConstraints:
-                    - attribute: region
-                      operator: between
-                      value: [1, 2]
-                    - attribute: weekday
-                      operator: in
-                      value: ["Mon", "Wed", "Fri"]
+                  engine: spmf
+                  dataset: /data/contextPasquier99.dat
+                  queryType: frequent
+                  params:
+                    minSupport: 0.5
       responses:
         "200":
-          description: Query accepted and processing started
+          description: Task accepted and created
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  queryId:
-                    type: string
-                    format: uuid
-        "400":
-          description: Malformed request or missing fields
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "422":
-          description: Semantic error in query
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "500":
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-  /queries/{id}/status:
-    get:
-      summary: Get the status of a submitted query
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: The unique identifier of the query.
-      responses:
-        "200":
-          description: Current query status
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  queryId:
-                    type: string
-                  status:
-                    type: string
-                    enum: [pending, running, completed, failed]
-        "404":
-          description: Query ID not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-  /queries/{id}/result:
-    get:
-      summary: Get results of a completed query
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: The unique identifier of the query.
-      responses:
-        "200":
-          description: Query result and summary statistics
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/QueryResult"
-        "404":
-          description: Query ID not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-  /queries/validate:
-    post:
-      summary: Validate a query definition
-      description: Check semantic correctness of query constraints and combinations.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/QueryRequest"
-      responses:
-        "200":
-          description: Validation result
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  valid:
-                    type: boolean
-                  errors:
-                    type: array
-                    items:
-                      type: string
-        "400":
-          description: Malformed input
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-  /constraints:
-    get:
-      summary: Get supported constraint types and attributes
-      description: Lists all constraintable attributes and allowed operators for both items and transactions.
-      responses:
-        "200":
-          description: Attribute metadata
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ConstraintMetadata"
-
-  /datasets:
-    get:
-      summary: List available datasets
-      parameters:
-        - in: query
-          name: limit
-          schema:
-            type: integer
-          description: Maximum number of datasets to return.
-        - in: query
-          name: offset
-          schema:
-            type: integer
-          description: Offset for pagination.
-      responses:
-        "200":
-          description: Dataset list
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    name:
-                      type: string
-                    description:
-                      type: string
-
-  /datasets/upload:
-    post:
-      summary: Upload a new dataset file
-      description: >
-        Accepts a new CSV transactional dataset.
-        The file must have one transaction per line, with items comma-separated. Example:
-        "milk,bread,cheese"
-      requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                file:
-                  type: string
-                  format: binary
-      responses:
-        "200":
-          description: Upload successful
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  datasetName:
-                    type: string
-        "400":
-          description: Invalid or missing file
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: "#/components/schemas/Task"
+              examples:
+                created:
+                  summary: Task created
+                  value:
+                    id: "123e4567-e89b-12d3-a456-426614174000"
+                    engine: spmf
+                    dataset: /data/contextPasquier99.dat
+                    queryType: frequent
+                    params:
+                      minSupport: 0.5
+                    status: PENDING
+                    result: null
         "409":
-          description: Dataset with the same name already exists
+          description: A task is already processing
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                type: string
+              examples:
+                conflict:
+                  value: "A task is already processing. Please wait or cancel the current task."
+        "503":
+          description: Service unavailable or cannot accept new tasks
+          content:
+            application/json:
+              schema:
+                type: string
+              examples:
+                unavailable:
+                  value: "Failed to submit task. The service might be busy or unable to accept new tasks at the moment."
+
+  /api/tasks/status:
+    get:
+      summary: Get the status of the current mining task
+      description: |
+        Returns the current task (if any). If no task is running or pending, returns 204 No Content.
+      responses:
+        "200":
+          description: Current task status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+              examples:
+                running:
+                  value:
+                    id: "123e4567-e89b-12d3-a456-426614174000"
+                    engine: spmf
+                    dataset: /data/contextPasquier99.dat
+                    queryType: frequent
+                    params:
+                      minSupport: 0.5
+                    status: PROCESSING
+                    result: null
+        "204":
+          description: No active task
+
+  /api/tasks/cancel:
+    post:
+      summary: Cancel the current mining task
+      description: |
+        Requests cancellation of the current task. If no task is running, returns 404.
+      responses:
+        "200":
+          description: Cancellation acknowledged
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: "Cancellation request acknowledged. The task will be stopped."
+        "404":
+          description: No active task to cancel
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: "No active task to cancel or task is already completed/cancelled."
+
+  /api/tasks/acknowledge:
+    post:
+      summary: Acknowledge and clear a finished task
+      description: |
+        Acknowledge a terminal (COMPLETED/FAILED/CANCELLED) task and clear it from the backend. Returns 404 if no such task exists.
+      responses:
+        "200":
+          description: Task acknowledged and cleared
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: "Task acknowledged and cleared."
+        "404":
+          description: No terminal task to acknowledge
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: "No terminal task to acknowledge."
 
 components:
   schemas:
-    ErrorResponse:
+    MiningTaskRequest:
       type: object
+      required:
+        - engine
+        - dataset
+        - queryType
+        - params
       properties:
-        timestamp:
-          type: string
-          format: date-time
-        status:
-          type: integer
-        error:
-          type: string
-        message:
-          type: string
-        path:
-          type: string
-        details:
-          type: array
-          items:
-            type: string
-
-    QueryRequest:
-      type: object
-      properties:
-        dataset:
-          type: string
         engine:
           type: string
-          enum: [auto, spmf, choco]
-        threshold:
+          description: Mining engine to use
+          enum: [spmf, choco, auto]
+        dataset:
+          type: string
+          description: Path to the dataset (depending on backend configuration)
+        queryType:
+          type: string
+          description: Type of mining query
+          enum:
+            [
+              frequent,
+              closed,
+              maximal,
+              rare,
+              generators,
+              minimal,
+              size_between,
+              presence,
+              absence,
+            ]
+        params:
+          type: object
+          description: Additional parameters for the mining query
+          discriminator:
+            propertyName: queryType
+            mapping:
+              frequent: "#/components/schemas/FrequentParams"
+              closed: "#/components/schemas/ClosedParams"
+              maximal: "#/components/schemas/MaximalParams"
+              rare: "#/components/schemas/RareParams"
+              generators: "#/components/schemas/GeneratorsParams"
+              minimal: "#/components/schemas/MinimalParams"
+              size_between: "#/components/schemas/SizeBetweenParams"
+              presence: "#/components/schemas/PresenceParams"
+              absence: "#/components/schemas/AbsenceParams"
+
+    FrequentParams:
+      type: object
+      required:
+        - minSupport
+      properties:
+        minSupport:
           type: number
           format: float
-          description: The minimum support (alpha) value.
-        thresholdType:
-          type: string
-          enum: [percentage, absolute]
-          default: percentage
-          description: Indicates if threshold is a percentage or count.
-        patternType:
-          type: object
-          properties:
-            frequency:
-              type: string
-              enum: [frequent, rare]
-            border:
-              type: string
-              enum: [maximal, minimal]
-              nullable: true
-            structure:
-              type: array
-              items:
-                type: string
-                description: 'Allowed values: "closed", "generator"'
-        itemConstraints:
-          type: array
-          items:
-            $ref: "#/components/schemas/Constraint"
-        transactionConstraints:
-          type: array
-          items:
-            $ref: "#/components/schemas/Constraint"
+          minimum: 0
+          maximum: 1
+          description: Minimum support threshold (0-1)
+          example: 0.5
 
-    Constraint:
+    ClosedParams:
       type: object
+      required:
+        - minSupport
       properties:
-        attribute:
-          type: string
-        operator:
-          type: string
-        value:
-          oneOf:
-            - type: string
-            - type: number
-            - type: array
-              items:
-                oneOf:
-                  - type: string
-                  - type: number
-
-    ConstraintMetadata:
-      type: object
-      properties:
-        itemConstraints:
-          type: array
-          items:
-            $ref: "#/components/schemas/ConstraintDefinition"
-        transactionConstraints:
-          type: array
-          items:
-            $ref: "#/components/schemas/ConstraintDefinition"
-
-    ConstraintDefinition:
-      type: object
-      properties:
-        attribute:
-          type: string
-        type:
-          type: string
-          enum: [categorical, numeric]
-        operators:
-          type: array
-          items:
-            type: string
-
-    QueryResult:
-      type: object
-      properties:
-        queryId:
-          type: string
-        engineUsed:
-          type: string
-          enum: [spmf, choco]
-        executionTime:
+        minSupport:
           type: number
-        patterns:
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Minimum support threshold (0-1)
+          example: 0.5
+
+    MaximalParams:
+      type: object
+      required:
+        - minSupport
+      properties:
+        minSupport:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Minimum support threshold (0-1)
+          example: 0.5
+
+    RareParams:
+      type: object
+      required:
+        - maxSupport
+      properties:
+        maxSupport:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Maximum support threshold (0-1)
+          example: 0.1
+
+    GeneratorsParams:
+      type: object
+      required:
+        - minSupport
+      properties:
+        minSupport:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Minimum support threshold (0-1)
+          example: 0.5
+
+    MinimalParams:
+      type: object
+      required:
+        - maxSupport
+      properties:
+        maxSupport:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Maximum support threshold (0-1)
+          example: 0.5
+
+    SizeBetweenParams:
+      type: object
+      required:
+        - minSupport
+        - minSize
+        - maxSize
+      properties:
+        minSupport:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Minimum support threshold (0-1)
+          example: 0.5
+        minSize:
+          type: integer
+          minimum: 1
+          description: Minimum itemset size
+          example: 2
+        maxSize:
+          type: integer
+          minimum: 1
+          description: Maximum itemset size
+          example: 5
+
+    PresenceParams:
+      type: object
+      required:
+        - minSupport
+        - items
+      properties:
+        minSupport:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Minimum support threshold (0-1)
+          example: 0.5
+        items:
           type: array
+          items:
+            type: integer
+          description: Item IDs to check for presence/absence
+          example: [1, 3, 5]
+
+    AbsenceParams:
+      type: object
+      required:
+        - minSupport
+        - items
+      properties:
+        minSupport:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Minimum support threshold (0-1)
+          example: 0.5
+        items:
+          type: array
+          items:
+            type: integer
+          description: Item IDs to check for presence/absence
+          example: [1, 3, 5]
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique task identifier
+        status:
+          type: string
+          enum: [PENDING, PROCESSING, COMPLETED, FAILED, CANCELLED]
+        parameters:
+          type: object
+          description: Task parameters (engine, dataset, queryType, params)
+          properties:
+            engine:
+              type: string
+            dataset:
+              type: string
+            queryType:
+              type: string
+            params:
+              type: object
+        result:
+          type: array
+          description: Array of discovered patterns (present if status is COMPLETED)
           items:
             type: object
             properties:
-              items:
+              pattern:
                 type: array
                 items:
-                  type: string
-              support:
-                type: number
-        summary:
-          type: object
-          properties:
-            numPatterns:
-              type: integer
-            avgPatternLength:
-              type: number
-            supportRange:
-              type: array
-              items:
-                type: number
-            topItems:
-              type: array
-              items:
-                type: string
-        warnings:
-          type: array
-          items:
-            type: string
+                  type: integer
+                description: Itemset pattern (as item IDs)
+              freq:
+                type: integer
+                description: Pattern frequency (support count)
+        error:
+          type: string
+          nullable: true
+          description: Error message if the task failed
+        cancellationRequested:
+          type: boolean
+          description: Whether cancellation was requested for this task
+      required:
+        - id
+        - status
+        - parameters
+        - result
+        - error
+        - cancellationRequested
+      example:
+        id: "24b32fd0-7cae-4e18-bd9c-ab524f2e2f64"
+        status: COMPLETED
+        parameters:
+          engine: SPMF
+          dataset: /data/contextPasquier99.dat
+          queryType: frequent
+          params:
+            minSupport: "0.5"
+        result:
+          - pattern: [1]
+            freq: 3
+          - pattern: [2]
+            freq: 4
+          - pattern: [3]
+            freq: 4
+          - pattern: [5]
+            freq: 4
+          - pattern: [1, 3]
+            freq: 3
+          - pattern: [2, 3]
+            freq: 3
+          - pattern: [2, 5]
+            freq: 4
+          - pattern: [3, 5]
+            freq: 3
+          - pattern: [2, 3, 5]
+            freq: 3
+        error: null
+        cancellationRequested: false
