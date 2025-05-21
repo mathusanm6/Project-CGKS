@@ -82,13 +82,30 @@ public class MiningSelector {
             // Extract the filename from the path
             String datasetPath = request.getDataset();
             String filename = extractFilenameFromPath(datasetPath);
+            String queryString = request.getQueryType(); // Get query type
             
+            // Get frequency according to query
+            Object support;
+            System.err.println("Query params");
+            System.err.println(request.getParams());
+            System.err.println(queryString);
+            if((queryString.equals("minimal")) || (queryString.equals("rare"))){
+                System.err.println("get max support");
+                support = request.getParams().get("maxSupport");
+            }else{
+                support = request.getParams().get("minSupport");
+            }
+            
+
             // Prepare features for prediction
             Map<String, Object> predictionFeatures = createPredictionFeatures(
-                request.getQueryType(), 
+                queryString, 
                 filename, 
-                request.getParams().get("minSupport")
+                support 
             );
+            System.err.println("Json computed params");
+            System.out.println(predictionFeatures);
+            System.out.println(predictionFeatures.keySet());
             
             // Get prediction from the API
             Integer prediction = requestPrediction(predictionFeatures);
@@ -132,16 +149,16 @@ public class MiningSelector {
      *
      * @param queryType The query type from the frontend
      * @param filename The dataset filename
-     * @param minSupport The minimum support threshold
+     * @param support The support threshold
      * @return A map containing the prediction features
      */
     private static Map<String, Object> createPredictionFeatures(
-            String queryType, String filename, Object minSupport) {
+            String queryType, String filename, Object support) {
         
         Map<String, Object> features = new HashMap<>();
         features.put("Query", mapToBackendQuery(queryType));
         features.put("File", filename);
-        features.put("Frequency", minSupport);
+        features.put("Frequency", support);
         return features;
     }
     
