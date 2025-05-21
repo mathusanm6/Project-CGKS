@@ -5,7 +5,7 @@ import Tooltip from "../ui/Tooltip";
 import FormFields from "./FormFields";
 import ErrorBoundary from "../ui/ErrorBoundary";
 
-const DataForm = ({
+const DataFormComponent = ({
   engine,
   setEngine,
   dataset,
@@ -19,6 +19,8 @@ const DataForm = ({
   handleSubmit,
   resetForm,
   isFormModified,
+  currentTask,
+  handleCancelTask,
 }) => {
   const handleQueryChange = (e) => {
     setQuery(e.target.value);
@@ -125,27 +127,74 @@ const DataForm = ({
       </div>
 
       <div className="button-group">
-        <button
-          onClick={handleSubmit}
-          disabled={isLoading}
-          className={`primary-button ${isLoading ? "disabled" : ""}`}
-          aria-busy={isLoading}
-        >
-          {isLoading ? (
-            <>
-              <span className="loading-icon">
-                <LoaderIcon />
-              </span>
-              Traitement...
-            </>
-          ) : (
-            "Lancer la requête"
-          )}
-        </button>
+        {!currentTask ||
+        currentTask.status === "COMPLETED" ||
+        currentTask.status === "FAILED" ||
+        currentTask.status === "CANCELLED" ? (
+          <button
+            onClick={handleSubmit}
+            disabled={isLoading}
+            className={`primary-button ${isLoading ? "disabled" : ""}`}
+            aria-busy={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <span className="loading-icon">
+                  <LoaderIcon />
+                </span>
+                Traitement...
+              </>
+            ) : (
+              "Lancer la requête"
+            )}
+          </button>
+        ) : (
+          <button
+            onClick={handleCancelTask}
+            disabled={
+              !isLoading &&
+              !(
+                currentTask &&
+                (currentTask.status === "PENDING" ||
+                  currentTask.status === "PROCESSING")
+              )
+            }
+            className={`cancel-button ${
+              !isLoading &&
+              !(
+                currentTask &&
+                (currentTask.status === "PENDING" ||
+                  currentTask.status === "PROCESSING")
+              )
+                ? "disabled"
+                : ""
+            }`}
+            aria-busy={isLoading}
+          >
+            {isLoading ||
+            (currentTask &&
+              (currentTask.status === "PENDING" ||
+                currentTask.status === "PROCESSING")) ? (
+              <>
+                <span className="loading-icon">
+                  <LoaderIcon />
+                </span>
+                Arrêter la fouille
+              </>
+            ) : (
+              "Arrêter la fouille" // Should not happen if logic is correct
+            )}
+          </button>
+        )}
 
         <button
           onClick={resetForm}
-          disabled={isLoading}
+          disabled={
+            isLoading ||
+            (currentTask &&
+              (currentTask.status === "PENDING" ||
+                currentTask.status === "PROCESSING"))
+          }
           className={`secondary-button ${isLoading ? "disabled" : ""}`}
           aria-disabled={isLoading}
         >
@@ -155,5 +204,7 @@ const DataForm = ({
     </div>
   );
 };
+
+const DataForm = React.memo(DataFormComponent);
 
 export default DataForm;

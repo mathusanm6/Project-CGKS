@@ -1,11 +1,16 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import { engines, datasets, getDefaultParamsForQuery, queryTypes } from "./constants";
+import {
+  engines,
+  datasets,
+  getDefaultParamsForQuery,
+  queryTypes,
+} from "./constants";
 import Alert from "./components/ui/Alert";
 import DataForm from "./components/form/DataForm";
 import ResultsTable from "./components/results/ResultsTable";
 import { DatabaseIcon } from "./components/icons/Icons";
 import { useFormValidation } from "./hooks/useFormValidation";
-import { submitTask } from "./services/ApiService";
+import { submitTask, getTaskStatus, cancelTask, acknowledgeTask } from "./services/ApiService";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
 import { useContentHeight } from "./hooks/useContentHeight";
 
@@ -25,14 +30,122 @@ const App = () => {
   const [alertMessage, setAlertMessage] = useState(null);
   // Track if form has been modified since last submission
   const [isFormModified, setIsFormModified] = useState(false);
+  const [currentTask, setCurrentTask] = useState(null);
+  const [isPolling, setIsPolling] = useState(false);
 
   // Refs
   const appHeaderRef = useRef(null);
+  const alertTimeoutRef = useRef(null);
 
   // Custom hooks
   const { validation, validateForm, clearValidationError, setValidation } =
     useFormValidation();
   const contentHeight = useContentHeight(appHeaderRef);
+
+  // Cleanup function for alert timeouts
+  const clearAlertTimeout = () => {
+    if (alertTimeoutRef.current) {
+      clearTimeout(alertTimeoutRef.current);
+      alertTimeoutRef.current = null;
+    }
+  };
+
+  // Auto-dismiss success/info alerts after 5 seconds
+  useEffect(() => {
+    clearAlertTimeout();
+
+    if (
+      alertMessage &&
+      (alertMessage.type === "success" || alertMessage.type === "info")
+    ) {
+      alertTimeoutRef.current = setTimeout(() => {
+        setAlertMessage(null);
+      }, 5000);
+    }
+
+    return clearAlertTimeout;
+  }, [alertMessage]);
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => clearAlertTimeout();
+  }, []);
+
+  // Fetch task status periodically
+  useEffect(() => {
+    let isMounted = true; // To prevent state updates on unmounted component
+    let intervalId;
+
+    const fetchStatus = async () => {
+      // Skip polling if we're explicitly not polling
+      if (!isPolling) return;
+
+      const statusResponse = await getTaskStatus();
+      if (!isMounted) return; // Check if component is still mounted
+
+      if (statusResponse.success && statusResponse.data) {
+        const newTaskStatus = statusResponse.data;
+
+        // Batch state updates to reduce re-renders
+        const updates = {};
+        updates.currentTask = newTaskStatus;
+
+        if (
+          newTaskStatus.status === "PROCESSING" ||
+          newTaskStatus.status === "PENDING"
+        ) {
+          updates.isLoading = true;
+        } else {
+          // COMPLETED, FAILED, CANCELLED, or other terminal states
+          updates.isLoading = false;
+          updates.isPolling = false;
+
+          // Acknowledge terminal state to backend
+          await acknowledgeTask();
+
+          if (newTaskStatus.status === "COMPLETED") {
+            updates.results = newTaskStatus.result || [];
+            // Don't change the alertMessage if it was already set by submitTask
+          }
+          if (newTaskStatus.status === "FAILED") {
+            updates.alertMessage = {
+              type: "error",
+              message: newTaskStatus.error || "Task failed.",
+            };
+          }
+          // Handle CANCELLED if needed
+          if (newTaskStatus.status === "CANCELLED") {
+            updates.alertMessage = {
+              type: "info",
+              message: "Task was cancelled.",
+            };
+          }
+        }
+
+        // Apply all updates at once
+        setCurrentTask(updates.currentTask);
+        if (updates.isLoading !== undefined) setIsLoading(updates.isLoading);
+        if (updates.isPolling !== undefined) setIsPolling(updates.isPolling);
+        if (updates.results) setResults(updates.results);
+        if (updates.alertMessage) setAlertMessage(updates.alertMessage);
+      } else if (statusResponse.success && !statusResponse.data) {
+        // No active task
+        setCurrentTask(null);
+        setIsLoading(false);
+        setIsPolling(false);
+      }
+    };
+
+    if (isPolling) {
+      fetchStatus(); // Initial fetch
+      intervalId = setInterval(fetchStatus, 2000); // Poll every 2 seconds
+    }
+
+    return () => {
+      isMounted = false; // Set flag on unmount
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [isPolling]);
 
   // Handle form field changes
   const handleParamChange = useCallback(
@@ -63,24 +176,40 @@ const App = () => {
     setIsLoading(true);
     setAlertMessage(null);
     setResults([]);
-    setIsFormModified(false);
 
     const response = await submitTask(engine, dataset, query, params);
 
-    if (response.success) {
-      setResults(response.data);
+    if (response.success && response.data) {
+      setCurrentTask(response.data);
       setAlertMessage({
-        type: response.data.length > 0 ? "success" : "info",
-        message: response.message,
+        type: "success",
+        message: response.message, // "Task submitted successfully."
       });
+      setIsFormModified(false); // Mark form as "submitted"
+      setIsPolling(true); // Start polling for updates
+
+      if (response.data.status === "COMPLETED") {
+        setResults(response.data.result || []);
+        setIsLoading(false); // Task completed immediately
+        setIsPolling(false); // Stop polling
+      } else if (response.data.status === "FAILED") {
+        setAlertMessage({
+          type: "error",
+          message: response.data.error || "Task failed immediately.",
+        });
+        setIsLoading(false); // Task failed immediately
+        setIsPolling(false); // Stop polling
+      }
+      // If task is PENDING or PROCESSING, isLoading remains true.
+      // The polling useEffect will manage isLoading and results from this point.
     } else {
+      // Submission itself failed (e.g., network error, API conflict, validation error from backend)
       setAlertMessage({
         type: "error",
-        message: response.message,
+        message: response.message || "Failed to submit task. Please try again.",
       });
+      setIsLoading(false); // Critical: Reset isLoading if the submission action itself failed
     }
-
-    setIsLoading(false);
   };
 
   // Reset form to initial state
@@ -111,22 +240,30 @@ const App = () => {
       setQuery(newQuery);
       setParams(getDefaultParamsForQuery(newQuery));
       setValidation({});
-      setAlertMessage(null);
       setIsFormModified(true);
     },
     [setValidation]
   );
 
-  // Handle window resize for better responsiveness
-  useEffect(() => {
-    const handleResize = () => {
-      // Force re-render on resize to ensure proper layout adjustments
-      setIsFormModified((prevState) => prevState);
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  const handleCancelTask = async () => {
+    if (
+      !currentTask ||
+      (currentTask.status !== "PENDING" && currentTask.status !== "PROCESSING")
+    ) {
+      setAlertMessage({
+        type: "info",
+        message:
+          "No active task to cancel or task is not in a cancellable state.",
+      });
+      return;
+    }
+    const cancelResponse = await cancelTask();
+    if (cancelResponse.success) {
+      setAlertMessage({ type: "info", message: cancelResponse.message });
+    } else {
+      setAlertMessage({ type: "error", message: cancelResponse.message });
+    }
+  };
 
   return (
     <div className="app-container">
@@ -148,7 +285,10 @@ const App = () => {
             <Alert
               type={alertMessage.type}
               message={alertMessage.message}
-              onClose={() => setAlertMessage(null)}
+              onClose={() => {
+                setAlertMessage(null);
+                clearAlertTimeout();
+              }}
             />
           )}
         </div>
@@ -170,6 +310,8 @@ const App = () => {
                 handleSubmit={handleSubmit}
                 resetForm={resetForm}
                 isFormModified={isFormModified}
+                currentTask={currentTask}
+                handleCancelTask={handleCancelTask}
               />
             </ErrorBoundary>
           </div>

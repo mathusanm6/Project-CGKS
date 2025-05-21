@@ -17,6 +17,17 @@ public class AsyncConfig {
         executor.setCorePoolSize(2);
         executor.setMaxPoolSize(5);
         executor.setQueueCapacity(10);
+        executor.setThreadNamePrefix("ApiTask-");
+        executor.initialize();
+        return executor;
+    }
+    
+    @Bean(name = "miningTaskExecutor")
+    public Executor miningTaskExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(2);
+        executor.setMaxPoolSize(5);
+        executor.setQueueCapacity(5);
         executor.setThreadNamePrefix("MiningTask-");
         executor.initialize();
         return executor;

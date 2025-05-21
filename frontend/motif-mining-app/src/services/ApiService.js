@@ -19,6 +19,7 @@ export const submitTask = async (engine, dataset, queryType, params) => {
       queryType,
       params: apiParams,
     });
+    // The backend returns the entire task object. The results are in task.result
     return {
       success: true,
       data: response.data,
@@ -64,6 +65,24 @@ export const cancelTask = async () => {
   } catch (error) {
     console.error("API Error (cancelTask):", error);
     let errorMessage = "Failed to cancel task.";
+    if (error.response) {
+      errorMessage = `Error: ${error.response.status} - ${
+        error.response.data || error.response.statusText
+      }`;
+    } else if (error.request) {
+      errorMessage = "No response from server.";
+    }
+    return { success: false, message: errorMessage };
+  }
+};
+
+export const acknowledgeTask = async () => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/api/tasks/acknowledge`);
+    return { success: true, message: response.data };
+  } catch (error) {
+    console.error("API Error (acknowledgeTask):", error);
+    let errorMessage = "Failed to acknowledge task.";
     if (error.response) {
       errorMessage = `Error: ${error.response.status} - ${
         error.response.data || error.response.statusText

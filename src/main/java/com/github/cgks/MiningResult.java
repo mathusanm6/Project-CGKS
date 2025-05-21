@@ -1,9 +1,15 @@
 package com.github.cgks;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.List;
 
+@JsonInclude(JsonInclude.Include.ALWAYS)
 public class MiningResult {
+    @JsonProperty("pattern")
     private List<Integer> pattern; // une liste de motifs, ex: [1, 4]
+    @JsonProperty("freq")
     private int freq; // fréquence du motif
 
     public MiningResult(List<Integer> pattern, int freq) {

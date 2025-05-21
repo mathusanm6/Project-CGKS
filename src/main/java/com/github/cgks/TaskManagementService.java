@@ -2,20 +2,28 @@ package com.github.cgks;
 
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class TaskManagementService {
 
     private final AtomicReference<Task> currentTask = new AtomicReference<>();
+    private final MiningTaskRunner miningTaskRunner;
+
+    @Autowired
+    public TaskManagementService(MiningTaskRunner miningTaskRunner) {
+        this.miningTaskRunner = miningTaskRunner;
+    }
 
     public Task submitTask(MiningRequest request) {
         Task newTask = new Task(request);
         if (currentTask.compareAndSet(null, newTask)) {
             newTask.setStatus(TaskStatus.PENDING);
-            processTask(newTask);
+            // This will run in a separate thread immediately
+            miningTaskRunner.runMiningTask(newTask);
             return newTask;
         } else {
             // Another task is already processing or pending
@@ -24,32 +32,9 @@ public class TaskManagementService {
     }
 
     @Async("taskExecutor")
-    public void processTask(Task task) {
-        task.setStatus(TaskStatus.PROCESSING);
-        MiningEngine engine = new MiningEngine();
-        try {
-            // Simulate long processing
-            // In a real scenario, the MiningEngine would need to check for cancellation
-            // For example, by periodically checking task.isCancellationRequested()
-            // or Thread.currentThread().isInterrupted()
-            List<MiningResult> results = engine.runMining(task.getParameters(), task::isCancellationRequested);
-            if (task.isCancellationRequested()) {
-                task.setStatus(TaskStatus.CANCELLED);
-            } else {
-                task.setResult(results);
-                task.setStatus(TaskStatus.COMPLETED);
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt(); // Preserve interrupt status
-            task.setStatus(TaskStatus.CANCELLED);
-            task.setError("Task was cancelled by user.");
-        } catch (Exception e) {
-            task.setStatus(TaskStatus.FAILED);
-            task.setError(e.getMessage());
-        } finally {
-            // Only clear the current task if it's the one we just processed
-            currentTask.compareAndSet(task, null);
-        }
+    public CompletableFuture<Task> getTaskStatusAsync() {
+        Task task = currentTask.get();
+        return CompletableFuture.completedFuture(task);
     }
 
     public Task getCurrentTaskStatus() {
@@ -60,10 +45,17 @@ public class TaskManagementService {
         Task task = currentTask.get();
         if (task != null && (task.getStatus() == TaskStatus.PENDING || task.getStatus() == TaskStatus.PROCESSING)) {
             task.setCancellationRequested(true);
-            // The running task (processTask method) should check this flag and stop.
-            // If it's PENDING, it might not even start or be removed from a queue.
-            // For immediate effect on PROCESSING, the MiningEngine needs to support interruption.
+            // The mining task runner will check this flag and stop the processing
             return true;
+        }
+        return false;
+    }
+
+    // Called by the frontend to acknowledge and clear a terminal task
+    public boolean acknowledgeAndClearTask() {
+        Task task = currentTask.get();
+        if (task != null && (task.getStatus() == TaskStatus.COMPLETED || task.getStatus() == TaskStatus.FAILED || task.getStatus() == TaskStatus.CANCELLED)) {
+            return currentTask.compareAndSet(task, null);
         }
         return false;
     }
