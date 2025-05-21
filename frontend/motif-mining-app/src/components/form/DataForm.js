@@ -21,6 +21,7 @@ const DataFormComponent = ({
   isFormModified,
   currentTask,
   handleCancelTask,
+  isCancelling,
 }) => {
   const handleQueryChange = (e) => {
     setQuery(e.target.value);
@@ -152,29 +153,38 @@ const DataFormComponent = ({
           <button
             onClick={handleCancelTask}
             disabled={
-              !isLoading &&
-              !(
-                currentTask &&
-                (currentTask.status === "PENDING" ||
-                  currentTask.status === "PROCESSING")
-              )
+              isCancelling ||
+              (!isLoading &&
+                !(
+                  currentTask &&
+                  (currentTask.status === "PENDING" ||
+                    currentTask.status === "PROCESSING")
+                ))
             }
             className={`cancel-button ${
-              !isLoading &&
-              !(
-                currentTask &&
-                (currentTask.status === "PENDING" ||
-                  currentTask.status === "PROCESSING")
-              )
+              isCancelling ||
+              (!isLoading &&
+                !(
+                  currentTask &&
+                  (currentTask.status === "PENDING" ||
+                    currentTask.status === "PROCESSING")
+                ))
                 ? "disabled"
                 : ""
             }`}
-            aria-busy={isLoading}
+            aria-busy={isLoading || isCancelling}
           >
-            {isLoading ||
-            (currentTask &&
-              (currentTask.status === "PENDING" ||
-                currentTask.status === "PROCESSING")) ? (
+            {isCancelling ? (
+              <>
+                <span className="loading-icon">
+                  <LoaderIcon />
+                </span>
+                Annulation...
+              </>
+            ) : isLoading ||
+              (currentTask &&
+                (currentTask.status === "PENDING" ||
+                  currentTask.status === "PROCESSING")) ? (
               <>
                 <span className="loading-icon">
                   <LoaderIcon />
@@ -182,7 +192,7 @@ const DataFormComponent = ({
                 Arrêter la fouille
               </>
             ) : (
-              "Arrêter la fouille" // Should not happen if logic is correct
+              "Arrêter la fouille"
             )}
           </button>
         )}

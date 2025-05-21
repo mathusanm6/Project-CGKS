@@ -10,7 +10,12 @@ import DataForm from "./components/form/DataForm";
 import ResultsTable from "./components/results/ResultsTable";
 import { DatabaseIcon } from "./components/icons/Icons";
 import { useFormValidation } from "./hooks/useFormValidation";
-import { submitTask, getTaskStatus, cancelTask, acknowledgeTask } from "./services/ApiService";
+import {
+  submitTask,
+  getTaskStatus,
+  cancelTask,
+  acknowledgeTask,
+} from "./services/ApiService";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
 import { useContentHeight } from "./hooks/useContentHeight";
 
@@ -32,6 +37,7 @@ const App = () => {
   const [isFormModified, setIsFormModified] = useState(false);
   const [currentTask, setCurrentTask] = useState(null);
   const [isPolling, setIsPolling] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   // Refs
   const appHeaderRef = useRef(null);
@@ -122,12 +128,23 @@ const App = () => {
           }
         }
 
+        // When backend reports terminal state, reset isCancelling
+        if (
+          newTaskStatus.status === "COMPLETED" ||
+          newTaskStatus.status === "FAILED" ||
+          newTaskStatus.status === "CANCELLED"
+        ) {
+          updates.isCancelling = false;
+        }
+
         // Apply all updates at once
         setCurrentTask(updates.currentTask);
         if (updates.isLoading !== undefined) setIsLoading(updates.isLoading);
         if (updates.isPolling !== undefined) setIsPolling(updates.isPolling);
         if (updates.results) setResults(updates.results);
         if (updates.alertMessage) setAlertMessage(updates.alertMessage);
+        if (updates.isCancelling !== undefined)
+          setIsCancelling(updates.isCancelling);
       } else if (statusResponse.success && !statusResponse.data) {
         // No active task
         setCurrentTask(null);
@@ -257,12 +274,9 @@ const App = () => {
       });
       return;
     }
-    const cancelResponse = await cancelTask();
-    if (cancelResponse.success) {
-      setAlertMessage({ type: "info", message: cancelResponse.message });
-    } else {
-      setAlertMessage({ type: "error", message: cancelResponse.message });
-    }
+    setIsCancelling(true);
+    await cancelTask();
+    // Wait for polling to update UI and alert
   };
 
   return (
@@ -312,6 +326,7 @@ const App = () => {
                 isFormModified={isFormModified}
                 currentTask={currentTask}
                 handleCancelTask={handleCancelTask}
+                isCancelling={isCancelling}
               />
             </ErrorBoundary>
           </div>
