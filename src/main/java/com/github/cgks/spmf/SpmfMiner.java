@@ -178,7 +178,7 @@ public class SpmfMiner implements Miner {
             if (cancellationChecker.getAsBoolean()) {
                 throw new MiningException("Mining task was cancelled during operation.", e);
             }
-            throw new MiningException("Unexpected error in extractMaximal: " + e.getMessage(), e);
+            throw new MiningException("Unexpected error in extractRare: " + e.getMessage(), e);
         }
     }
 
