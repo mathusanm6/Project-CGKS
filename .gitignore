@@ -1,4 +1,4 @@
-# Back-end
+# Back-end (Java)
 target/
 *.log
 *.class
@@ -18,6 +18,5 @@ target/
 output.txt
 __pycache__
 
-# Front-end
-
-# Front-end Docs
+# Back-end (Python)
+.venv/
