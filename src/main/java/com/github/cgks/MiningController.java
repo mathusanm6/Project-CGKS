@@ -52,7 +52,7 @@ public class MiningController {
                 if (currentTask != null) {
                     return ResponseEntity.ok(currentTask);
                 } else {
-                    return ResponseEntity.ok(null);
+                    return ResponseEntity.noContent().build();
                 }
             });
     }
