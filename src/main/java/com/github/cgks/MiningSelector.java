@@ -21,7 +21,7 @@ import com.google.gson.JsonObject;
  */
 public class MiningSelector {
     // API endpoint for prediction service
-    private static final String PREDICTION_API_URL = "http://localhost:5000/predict";
+    private static final String PREDICTION_API_URL = "http://localhost:3001/predict";
     
     // Mining engine identifiers
     private static final String ENGINE_AUTO = "auto";

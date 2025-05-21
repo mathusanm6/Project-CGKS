@@ -65,4 +65,4 @@ def predict():
 
 if __name__ == '__main__':
     # Start the Flask application when script is run directly
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=3001, debug=True)
