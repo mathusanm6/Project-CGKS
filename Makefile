@@ -10,18 +10,20 @@ RESOURCE_DIR := $(PROJECT_ROOT)src/main/resources
 FRONTEND_DIR := $(PROJECT_ROOT)frontend/motif-mining-app
 DOCS_DIR := $(PROJECT_ROOT)frontend-docs/swagger-ui
 
-.PHONY: all help venv model clean deps build api frontend docs
+.PHONY: prep help venv model clean deps build test api selector frontend ui docs
 
 help:
 	@echo "Available targets:"
 	@echo "  make help       - Show this help message"
-	@echo "  make all        - Run everything: venv, deps, build, model, frontend"
+	@echo "  make prep        - Run everything: venv, deps, build, model, frontend"
 	@echo "  make venv       - Create Python virtual environment and install requirements"
 	@echo "  make model      - Run the Python model training script"
 	@echo "  make clean      - Clean Java build artifacts (Maven)"
 	@echo "  make deps       - Resolve Java dependencies with Maven"
 	@echo "  make build      - Build the Java backend with Maven"
+	@echo "  make test       - Run Java unit tests with Maven"
 	@echo "  make api        - Run the Java backend application"
+	@echo "  make selector   - Run the Python classifier API"
 	@echo "  make frontend   - Build the React frontend (npm install + build)"
 	@echo "  make ui         - Serve the React frontend on http://localhost:3000"
 	@echo "  make docs       - Serve Swagger UI docs on http://localhost:8000"
@@ -29,7 +31,7 @@ help:
 	@echo "Manual activation of Python venv:"
 	@echo "  source $(VENV_DIR)/bin/activate"
 
-all: venv deps build model frontend
+prep: venv deps build frontend
 
 # === Python ===
 venv:
@@ -54,11 +56,14 @@ deps:
 build:
 	mvn install
 
+test:
+	mvn test
+
 api:
 	mvn org.springframework.boot:spring-boot-maven-plugin:2.7.15:run 
 
 selector:
-	 source .venv/bin/activate && python3 src/main/python/classifier_api.py
+	source .venv/bin/activate && python3 src/main/python/classifier_api.py
 
 # === Frontend (React) ===
 frontend:
