@@ -1,72 +1,170 @@
 import os
 import pandas as pd
+from typing import Dict, List, Tuple, Set, Optional, Union
+from global_var import (
+    DATA_FOLDER,
+    DATASETS_FOLDER,
+    SAVED_PIPELINE_FOLDER
 
-# === Étape 1 : Calcul des statistiques pour tous les fichiers .dat ===
-data_folder = "data"
-stats = {}
+)
 
-for filename in os.listdir(data_folder):
-    if filename.endswith(".dat"):
-        file_path = os.path.join(data_folder, filename)
-        try:
-            items = set()
-            line_count = 0
-            nb_items_in_lines = 0
+def calculate_file_statistics(data_folder: str) -> Dict[str, List[Union[int, float]]]:
+    """
+    Calculate statistics for all .dat files in the specified folder.
+    
+    Args:
+        data_folder (str): Path to the directory containing .dat files
+        
+    Returns:
+        Dict[str, List[Union[int, float]]]: Dictionary with filename as key and 
+            [number of unique items, number of transactions, density] as value
+    """
+    stats = {}
+    
+    if not os.path.exists(data_folder):
+        print(f"Data folder '{data_folder}' does not exist.")
+        return stats
+        
+    for filename in os.listdir(data_folder):
+        if filename.endswith(".dat"):
+            file_path = os.path.join(data_folder, filename)
+            try:
+                unique_items = set()
+                transaction_count = 0
+                total_item_count = 0
 
-            with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:
-                for line in file:
-                    tokens = line.strip().split()
-                    nb_items_in_lines += len(tokens)
-                    items.update(tokens)
-                    line_count += 1
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:
+                    for line in file:
+                        tokens = line.strip().split()
+                        total_item_count += len(tokens)
+                        unique_items.update(tokens)
+                        transaction_count += 1
 
-            if line_count > 0:
-                density = (nb_items_in_lines / line_count) / len(items)
-            else:
-                density = 0
+                # Calculate density if the file has transactions, otherwise default to 0
+                if transaction_count > 0:
+                    density = (total_item_count / transaction_count) / len(unique_items)
+                else:
+                    density = 0.0
 
-            # Enregistrement des stats : Nb unique items, Nb transactions, Densité
-            stats[filename] = [len(items), line_count, density]
+                # Store stats: [number of unique items, number of transactions, density]
+                stats[filename] = [len(unique_items), transaction_count, density]
 
-        except Exception as e:
-            print(f"Erreur de lecture du fichier {filename} : {e}")
+            except Exception as e:
+                print(f"Error reading file {filename}: {e}")
+                
+    return stats
 
-# === Étape 2 : Création du DataFrame de résultats ===
-colonnes = ['Query', 'File', 'Frequency', 'Nbitems', 'Nbtransactions', 'Density', 'Class']
-res_df = pd.DataFrame(columns=colonnes)
 
-# === Étape 3 : Lecture des fichiers choco.csv et spmf.csv ===
-with open('choco.csv', 'r') as f1, open('spmf.csv', 'r') as f2:
-    lignes1 = f1.readlines()
-    lignes2 = f2.readlines()
+def determine_class(
+    duration1: float, 
+    duration2: float, 
+    itemset1: int, 
+    itemset2: int,
+    time_threshold: float = 15000
+) -> int:
+    """
+    Determine which algorithm performed better based on execution time and itemsets.
+    
+    Args:
+        duration1 (float): Execution time of the first algorithm
+        duration2 (float): Execution time of the second algorithm
+        itemset1 (int): Number of itemsets found by the first algorithm
+        itemset2 (int): Number of itemsets found by the second algorithm
+        time_threshold (float): Threshold to determine if execution times are comparable
+        
+    Returns:
+        int: 0 if the first algorithm performed better, 1 if the second did
+    """
+    if duration1 < time_threshold and duration2 < time_threshold:
+        return 0 if duration1 < duration2 else 1
+    else:
+        return 0 if itemset1 > itemset2 else 1
 
-# === Étape 4 : Construction des lignes du DataFrame final ===
-for i, (l1, l2) in enumerate(zip(lignes1, lignes2), start=1):
-    champs1 = l1.strip().split(',')
-    champs2 = l2.strip().split(',')
 
+def create_comparison_dataset(
+    choco_file_path: str = f'{DATASETS_FOLDER}/choco.csv', 
+    spmf_file_path: str = f'{DATASETS_FOLDER}/spmf.csv',
+    data_folder: str = f'src/main/resources/data',
+    output_file_path: str = f'{DATASETS_FOLDER}/classes.csv'
+) -> pd.DataFrame:
+    """
+    Create a dataset comparing the performance of two algorithms.
+    
+    Args:
+        choco_file_path (str): Path to the CSV file with choco algorithm results
+        spmf_file_path (str): Path to the CSV file with spmf algorithm results
+        data_folder (str): Path to the folder with .dat files
+        output_file_path (str): Path where the output CSV will be saved
+        
+    Returns:
+        pd.DataFrame: The generated comparison dataset
+    """
+    # Calculate statistics for all .dat files
+    file_stats = calculate_file_statistics(data_folder)
+    
+    # Create DataFrame to store results
+    columns = ['Query', 'File', 'Frequency', 'Nbitems', 'Nbtransactions', 'Density', 'Class']
+    results_df = pd.DataFrame(columns=columns)
+    
+    # Read input files
     try:
-        query = champs1[0]
-        filename = champs1[1]
-        frequency = float(champs1[3])  # Assurez-vous que c'est bien un entier
-        duration1 = float(champs1[4])
-        duration2 = float(champs2[4])
-        itemset1 = int(champs1[2])
-        itemset2 = int(champs2[2])
+        with open(choco_file_path, 'r') as f1, open(spmf_file_path, 'r') as f2:
+            choco_lines = f1.readlines()
+            spmf_lines = f2.readlines()
+    except FileNotFoundError as e:
+        print(f"Error: Input file not found - {e}")
+        return results_df
+    
+    # Build the comparison dataset
+    for i, (choco_line, spmf_line) in enumerate(zip(choco_lines, spmf_lines), start=1):
+        try:
+            choco_fields = choco_line.strip().split(',')
+            spmf_fields = spmf_line.strip().split(',')
+            
+            # Extract fields from the data
+            query = choco_fields[0]
+            filename = choco_fields[1]
+            frequency = float(choco_fields[3])
+            duration_choco = float(choco_fields[4])
+            duration_spmf = float(spmf_fields[4])
+            itemset_choco = int(choco_fields[2])
+            itemset_spmf = int(spmf_fields[2])
+            
+            if filename not in file_stats:
+                print(f"Warning: Statistics not available for file {filename}")
+                continue
+                
+            # Get file statistics
+            nb_items, nb_transactions, density = file_stats[filename]
+            
+            # Determine which algorithm performed better
+            result_class = determine_class(
+                duration_choco, 
+                duration_spmf, 
+                itemset_choco, 
+                itemset_spmf
+            )
+            
+            # Add row to the results DataFrame
+            results_df.loc[len(results_df)] = [
+                query, 
+                filename, 
+                frequency, 
+                nb_items, 
+                nb_transactions, 
+                density, 
+                result_class
+            ]
+            
+        except Exception as e:
+            print(f"Line {i} skipped due to an error: {e}")
+    
+    # Save the final DataFrame
+    results_df.to_csv(output_file_path, index=False)
+    print(f"Comparison dataset saved to {output_file_path}")
+    
+    return results_df
 
-        nb_items, nb_trans, density = stats[filename]
 
-        # Classe : 0 si choco est meilleur, 1 sinon
-        if duration1 < 15000 and duration2 < 15000:
-            result_class = 0 if duration1 < duration2 else 1
-        else:
-            result_class = 0 if itemset1 > itemset2 else 1
-
-        # Ajout de la ligne
-        res_df.loc[len(res_df)] = [query, filename, frequency, nb_items, nb_trans, density, result_class]
-
-    except Exception as e:
-        print(f"Ligne {i} ignorée à cause d'une erreur : {e}")
-
-# === Étape 5 : Sauvegarde du DataFrame final ===
-res_df.to_csv("classes.csv", index=False)
+if __name__ == "__main__":
+    create_comparison_dataset()
