@@ -182,11 +182,9 @@ public class ChocoMiner implements Miner {
 
             try {
                 while (solver.solve()) {
-                    while (solver.solve()) {
-                        checkCancellation(cancellationChecker);
-                        MiningResult result = getMiningResult(database, x, freq);
-                        results.add(result);
-                    }
+                    checkCancellation(cancellationChecker);
+                    MiningResult result = getMiningResult(database, x, freq);
+                    results.add(result);
                 }
             } catch (Exception e) {
                 throw new MiningException("Error during solving process: " + e.getMessage(), e);

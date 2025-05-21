@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 @RestController
@@ -33,9 +35,9 @@ public class MiningController {
                     .body("A task is already processing. Please wait or cancel the current task.");
         }
 
-        Task submittedTask = taskManagementService.submitTask(request);
-        if (submittedTask != null) {
-            return ResponseEntity.ok(submittedTask);
+        Optional<Task> submittedTask = taskManagementService.submitTask(request);
+        if (submittedTask.isPresent()) {
+            return ResponseEntity.ok(submittedTask.get());
         } else {
             // This case should ideally be handled by the check above,
             // but as a fallback if submitTask returns null for other reasons.

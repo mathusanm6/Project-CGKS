@@ -394,7 +394,7 @@ public class SpmfMiner implements Miner {
             for (List<Itemset> level : itemsets.getLevels()) {
                 checkCancellation(cancellationChecker);
                 for (Itemset itemset : level) {
-                    if (!containsAny(itemset, sortedExcluded)) {
+                    if (!containsAny(itemset.getItems(), sortedExcluded)) {
                         results.addItemset(itemset, itemset.size());
                     }
                 }
@@ -467,7 +467,7 @@ public class SpmfMiner implements Miner {
             return dataset;
         } catch (Exception e) {
             e.printStackTrace();
-            throw new DatabaseException("Error loading dataset : " + path+ e.getMessage(), e);
+            throw new DatabaseException("Error loading dataset : " + path + e.getMessage(), e);
         }
     }
 
