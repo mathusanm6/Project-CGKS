@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -244,13 +245,20 @@ public class SpmfMiner implements Miner {
             Itemsets itemsets = algo.runAlgorithm(minSupport, dataset, null);
             Itemsets results = new Itemsets("Itemsets contenant tous: " + requiredItems);
 
+            Set<Integer> datasetItems = dataset.getUniqueItems();
+
+            // Filter required items to only include those in the dataset
+            List<Integer> filteredRequiredItems = requiredItems.stream()
+                    .filter(datasetItems::contains)
+                    .collect(Collectors.toList());
+
             // Cas spécial: si aucun item requis, on retourne tout
-            if (requiredItems == null || requiredItems.isEmpty()) {
+            if (filteredRequiredItems == null || filteredRequiredItems.isEmpty()) {
                 return ConvertToMiningResult.convertItemsetsToMiningResults(itemsets);
             }
 
             // Tri des items requis pour la recherche binaire
-            List<Integer> sortedRequired = new ArrayList<>(requiredItems);
+            List<Integer> sortedRequired = new ArrayList<>(filteredRequiredItems);
             Collections.sort(sortedRequired);
 
             // Parcours optimisé avec stream
@@ -434,15 +442,17 @@ public class SpmfMiner implements Miner {
      * @return An array of integers representing the items
      * @throws ParameterException If the items parameter is invalid
      */
-    private List<Integer> parseItems(String param) throws ParameterException {
-        try {
-            return Arrays.stream(param.split(","))
-                    .map(String::trim)
-                    .map(Integer::parseInt)
-                    .collect(Collectors.toList());
-        } catch (NumberFormatException e) {
-            throw new ParameterException("Invalid items parameter: " + param);
+    private List<Integer> parseItems(String param) {
+        List<Integer> result = new ArrayList<>();
+        for (String item : param.split(",")) {
+            String trimmed = item.trim();
+            try {
+                result.add(Integer.parseInt(trimmed));
+            } catch (NumberFormatException e) {
+                LOGGER.warning("Skipping invalid item: " + trimmed);
+            }
         }
+        return result;
     }
 
 }

@@ -468,7 +468,7 @@ class SpmfMinerTest {
         @Test
         @DisplayName("Invalid parameters - Too low support threshold")
         void testExtractRare_TooLowSupport() {
-            Map<String, String> params = Parameters.empty().withParam(MAX_SUPPORT_PARAM, 0.1).getHashMap();
+            Map<String, String> params = Parameters.empty().withParam(MAX_SUPPORT_PARAM, 0).getHashMap();
             assertThrows(ParameterException.class, () -> miner.extractRare(datasetPath, params));
         }
     }
@@ -571,7 +571,7 @@ class SpmfMinerTest {
         @Test
         @DisplayName("Invalid parameters - Too low support threshold")
         void testExtractMinimal_TooLowSupport() {
-            Map<String, String> params = Parameters.empty().withParam(MAX_SUPPORT_PARAM, 0.1).getHashMap();
+            Map<String, String> params = Parameters.empty().withParam(MAX_SUPPORT_PARAM, 0).getHashMap();
             assertThrows(ParameterException.class, () -> miner.extractMinimal(datasetPath, params));
         }
     }

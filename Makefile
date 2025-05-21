@@ -43,7 +43,7 @@ model: $(MODEL_SCRIPT)
 	cp $(MODEL_PKL) $(RESOURCE_DIR)/model/
 
 # === Backend (Java - Maven) ===
-java: clean deps install
+java: clean deps build
 
 clean:
 	mvn clean
