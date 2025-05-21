@@ -16,6 +16,7 @@ import com.google.gson.JsonObject;
 
 
 public class MiningSelector {
+    private static final String predictionURL = "http://localhost:5000/predict";
 
     // Static map to hold the mapping from frontend ID to backend query code
     private static final Map<String, String> queryTypeMap = new HashMap<>();
@@ -49,14 +50,14 @@ public class MiningSelector {
     }
 
 
-    public static Miner chooseMiner(MiningRequest request) {
+    public static Miner chooseMiner(MiningRequest request) throws Exception{
         if (request.getEngine() == null || request.getEngine().toLowerCase().equals("auto")) {
             
             // Prep input
             HashMap<String, Object> features = new HashMap<>();
             features.put("Query", mapToBackendQuery(request.getQueryType()));
-            String[] s = request.getDataset().split("/");
-            features.put("File", s[s.length-1]);
+            String[] pathTokens = request.getDataset().split("/");
+            features.put("File", pathTokens[pathTokens.length-1]);
             features.put("Frequency", request.getParams().get("minSupport"));
             
             
@@ -72,7 +73,7 @@ public class MiningSelector {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                return null;
+                throw new Exception("Failed to predict the mining engine.", e);
             }
         } else if (request.getEngine().toLowerCase().equals("spmf")) {
             return new SpmfMiner();
@@ -90,7 +91,7 @@ public class MiningSelector {
         String jsonInput = gson.toJson(features);
         
         // Create connection
-        URL url = new URL("http://localhost:5000/predict");
+        URL url = new URL(predictionURL);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("POST");
         conn.setRequestProperty("Content-Type", "application/json");
@@ -110,28 +111,6 @@ public class MiningSelector {
             JsonObject jsonResponse = gson.fromJson(response.toString(), JsonObject.class);
 
             return jsonResponse.get("prediction").getAsJsonArray().get(0);
-        }
-    }
-    
-    public static void main(String[] args) {
-        // Prep input
-        HashMap<String, Object> features = new HashMap<>();
-        features.put("Query", "Q1");
-        features.put("File", "contextPasquier99.dat");
-        features.put("Frequency", 0.6);
-            
-        try {
-            // Get prediction
-            Integer prediction = getPrediction(features).getAsInt();
-
-            // Make choice
-            if(prediction==1){
-                System.err.println("spmf");
-            }else{
-                System.err.println("choco");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 }

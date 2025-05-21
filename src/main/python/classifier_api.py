@@ -1,11 +1,9 @@
 from flask import Flask, request, jsonify
-import pickle
 import pandas as pd
-import numpy as np
 import joblib
 from pathlib import Path
 
-# Joblib manip
+# Joblib model loader
 def load_model(model_path):
     """
     Load a saved model from disk.
