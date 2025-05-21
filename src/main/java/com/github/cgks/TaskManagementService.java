@@ -18,16 +18,16 @@ public class TaskManagementService {
         this.miningTaskRunner = miningTaskRunner;
     }
 
-    public Task submitTask(MiningRequest request) {
+    public Optional<Task> submitTask(MiningRequest request) {
         Task newTask = new Task(request);
         if (currentTask.compareAndSet(null, newTask)) {
             newTask.setStatus(TaskStatus.PENDING);
             // This will run in a separate thread immediately
             miningTaskRunner.runMiningTask(newTask);
-            return newTask;
+            return Optional.of(newTask);
         } else {
             // Another task is already processing or pending
-            return null; // Or throw an exception, or return the existing task
+            return Optional.empty();
         }
     }
 
