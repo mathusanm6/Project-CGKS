@@ -162,6 +162,39 @@ const App = () => {
     };
   }, [isPolling]);
 
+  // Restore state from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("motifMiningState");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.engine) setEngine(parsed.engine);
+        if (parsed.dataset) setDataset(parsed.dataset);
+        if (parsed.query) setQuery(parsed.query);
+        if (parsed.params) setParams(parsed.params);
+        if (parsed.isPolling) setIsPolling(parsed.isPolling);
+        if (parsed.hasRun) setHasRun(parsed.hasRun);
+      } catch (e) {
+        // Ignore parse errors
+      }
+    }
+  }, []);
+
+  // Save state to localStorage when relevant state changes
+  useEffect(() => {
+    localStorage.setItem(
+      "motifMiningState",
+      JSON.stringify({
+        engine,
+        dataset,
+        query,
+        params,
+        isPolling,
+        hasRun,
+      })
+    );
+  }, [engine, dataset, query, params, isPolling, hasRun]);
+
   // Handle form field changes
   const handleParamChange = useCallback(
     (e) => {
@@ -241,6 +274,7 @@ const App = () => {
   const clearResultsAndAlert = useCallback(() => {
     setResults([]);
     setHasRun(false);
+    localStorage.removeItem("motifMiningState");
     // Only clear alert if it is a success (not info)
     if (alertMessage && alertMessage.type === "success") {
       setAlertMessage(null);
@@ -274,6 +308,13 @@ const App = () => {
     await cancelTask();
     // Wait for polling to update UI and alert
   };
+
+  // When task completes, clear localStorage
+  useEffect(() => {
+    if (!isPolling && !isLoading) {
+      localStorage.removeItem("motifMiningState");
+    }
+  }, [isPolling, isLoading]);
 
   return (
     <div className="app-container">
