@@ -38,6 +38,7 @@ const App = () => {
   const [currentTask, setCurrentTask] = useState(null);
   const [isPolling, setIsPolling] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [hasRun, setHasRun] = useState(false);
 
   // Refs
   const appHeaderRef = useRef(null);
@@ -190,6 +191,7 @@ const App = () => {
     setIsLoading(true);
     setAlertMessage(null);
     setResults([]);
+    setHasRun(true);
 
     const response = await submitTask(engine, dataset, query, params);
 
@@ -238,6 +240,7 @@ const App = () => {
   // Clear results and success/info alerts
   const clearResultsAndAlert = useCallback(() => {
     setResults([]);
+    setHasRun(false);
     // Only clear alert if it is a success (not info)
     if (alertMessage && alertMessage.type === "success") {
       setAlertMessage(null);
@@ -330,6 +333,7 @@ const App = () => {
                 results={results}
                 isLoading={isLoading}
                 clearResultsAndAlert={clearResultsAndAlert}
+                hasRun={hasRun}
               />
             </ErrorBoundary>
           </div>

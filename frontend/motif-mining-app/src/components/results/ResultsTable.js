@@ -3,7 +3,7 @@ import { FileTextIcon, LoaderIcon } from "../icons/Icons";
 import ErrorBoundary from "../ui/ErrorBoundary";
 import { TABLE_COLUMN_WIDTHS } from "../../constants";
 
-const ResultsTable = ({ results, isLoading, clearResultsAndAlert }) => {
+const ResultsTable = ({ results, isLoading, clearResultsAndAlert, hasRun }) => {
   const maxFreq = Math.max(...results.map((item) => item.freq));
   const sortedResults = [...results].sort((a, b) => {
     // First, sort by pattern length
@@ -122,6 +122,14 @@ const ResultsTable = ({ results, isLoading, clearResultsAndAlert }) => {
                 ))}
               </tbody>
             </table>
+          </div>
+        ) : hasRun ? (
+          <div className="status-container no-results-after-run">
+            <FileTextIcon className="status-icon" style={{ color: '#fa8072' }} />
+            <p style={{ fontSize: "16px", fontWeight: 600, marginBottom: "8px", color: '#fa8072' }}>
+              Aucun motif trouvé pour cette requête
+            </p>
+            <p>Essayez d'autres paramètres ou un autre dataset.</p>
           </div>
         ) : (
           <div className="status-container">
