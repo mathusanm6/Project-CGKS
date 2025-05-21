@@ -58,7 +58,6 @@ public abstract class MinerTest {
      * @return a new instance of the miner
      */
     protected abstract Miner createMiner();
-    
 
     // --- IMMUTABLE PARAMETERS BUILDER ---
     private static final class Parameters {
@@ -167,7 +166,7 @@ public abstract class MinerTest {
         void testExtractFrequent_Support60Percent() {
             assertTimeoutPreemptively(OPERATION_TIMEOUT, () -> {
                 Map<String, String> params = Parameters.empty().withParam(MIN_SUPPORT_PARAM, 0.6).getHashMap();
-                List<MiningResult> results = miner.extractFrequent(datasetPath, params);
+                List<MiningResult> results = miner.extractFrequent(datasetPath, params, () -> false);
 
                 assertNotNull(results, "Results should not be null");
                 assertFalse(results.isEmpty(), "Results should not be empty");
@@ -193,7 +192,7 @@ public abstract class MinerTest {
         void testExtractFrequent_Support80Percent() {
             assertTimeoutPreemptively(OPERATION_TIMEOUT, () -> {
                 Map<String, String> params = Parameters.empty().withParam(MIN_SUPPORT_PARAM, 0.8).getHashMap();
-                List<MiningResult> results = miner.extractFrequent(datasetPath, params);
+                List<MiningResult> results = miner.extractFrequent(datasetPath, params, () -> false);
 
                 assertNotNull(results, "Results should not be null");
                 assertFalse(results.isEmpty(), "Results should not be empty");
@@ -214,7 +213,7 @@ public abstract class MinerTest {
         void testExtractFrequent_Support20Percent() {
             assertTimeoutPreemptively(OPERATION_TIMEOUT, () -> {
                 Map<String, String> params = Parameters.empty().withParam(MIN_SUPPORT_PARAM, 0.2).getHashMap();
-                List<MiningResult> results = miner.extractFrequent(datasetPath, params);
+                List<MiningResult> results = miner.extractFrequent(datasetPath, params, () -> false);
 
                 assertNotNull(results, "Results should not be null");
                 assertFalse(results.isEmpty(), "Results should not be empty");
@@ -236,7 +235,7 @@ public abstract class MinerTest {
         void testExtractFrequent_Support100Percent() {
             assertTimeoutPreemptively(OPERATION_TIMEOUT, () -> {
                 Map<String, String> params = Parameters.empty().withParam(MIN_SUPPORT_PARAM, 1.0).getHashMap();
-                List<MiningResult> results = miner.extractFrequent(datasetPath, params);
+                List<MiningResult> results = miner.extractFrequent(datasetPath, params, () -> false);
 
                 assertNotNull(results, "Results should not be null");
                 assertTrue(results.isEmpty(), "Results should be empty as no itemset has 100% support");
@@ -247,21 +246,21 @@ public abstract class MinerTest {
         @DisplayName("Invalid Parameters - Negative Support")
         void testExtractFrequent_NegativeSupport() {
             Map<String, String> params = Parameters.empty().withParam(MIN_SUPPORT_PARAM, -0.1).getHashMap();
-            assertThrows(ParameterException.class, () -> miner.extractFrequent(datasetPath, params));
+            assertThrows(ParameterException.class, () -> miner.extractFrequent(datasetPath, params, () -> false));
         }
 
         @Test
         @DisplayName("Invalid Parameters - Support > 1")
         void testExtractFrequent_SupportGreaterThanOne() {
             Map<String, String> params = Parameters.empty().withParam(MIN_SUPPORT_PARAM, 1.1).getHashMap();
-            assertThrows(ParameterException.class, () -> miner.extractFrequent(datasetPath, params));
+            assertThrows(ParameterException.class, () -> miner.extractFrequent(datasetPath, params, () -> false));
         }
 
         @Test
         @DisplayName("Invalid Parameters - Missing Support")
         void testExtractFrequent_MissingSupport() {
             Map<String, String> params = Parameters.empty().getHashMap();
-            assertThrows(ParameterException.class, () -> miner.extractFrequent(datasetPath, params));
+            assertThrows(ParameterException.class, () -> miner.extractFrequent(datasetPath, params, () -> false));
         }
     }
 
@@ -274,7 +273,7 @@ public abstract class MinerTest {
         void testExtractClosed_Support60Percent() {
             assertTimeoutPreemptively(OPERATION_TIMEOUT, () -> {
                 Map<String, String> params = Parameters.empty().withParam(MIN_SUPPORT_PARAM, 0.6).getHashMap();
-                List<MiningResult> results = miner.extractClosed(datasetPath, params);
+                List<MiningResult> results = miner.extractClosed(datasetPath, params, () -> false);
 
                 assertNotNull(results, "Results should not be null");
                 assertFalse(results.isEmpty(), "Results should not be empty");
@@ -295,7 +294,7 @@ public abstract class MinerTest {
         void testExtractClosed_Support80Percent() {
             assertTimeoutPreemptively(OPERATION_TIMEOUT, () -> {
                 Map<String, String> params = Parameters.empty().withParam(MIN_SUPPORT_PARAM, 0.8).getHashMap();
-                List<MiningResult> results = miner.extractClosed(datasetPath, params);
+                List<MiningResult> results = miner.extractClosed(datasetPath, params, () -> false);
 
                 assertNotNull(results, "Results should not be null");
                 assertFalse(results.isEmpty(), "Results should not be empty");
@@ -314,7 +313,7 @@ public abstract class MinerTest {
         void testExtractClosed_Support20Percent() {
             assertTimeoutPreemptively(OPERATION_TIMEOUT, () -> {
                 Map<String, String> params = Parameters.empty().withParam(MIN_SUPPORT_PARAM, 0.2).getHashMap();
-                List<MiningResult> results = miner.extractClosed(datasetPath, params);
+                List<MiningResult> results = miner.extractClosed(datasetPath, params, () -> false);
 
                 assertNotNull(results, "Results should not be null");
                 assertFalse(results.isEmpty(), "Results should not be empty");
@@ -331,7 +330,7 @@ public abstract class MinerTest {
         @DisplayName("Invalid Parameters - Negative Support")
         void testExtractClosed_NegativeSupport() {
             Map<String, String> params = Parameters.empty().withParam(MIN_SUPPORT_PARAM, -0.1).getHashMap();
-            assertThrows(ParameterException.class, () -> miner.extractClosed(datasetPath, params));
+            assertThrows(ParameterException.class, () -> miner.extractClosed(datasetPath, params, () -> false));
         }
     }
 
@@ -344,7 +343,7 @@ public abstract class MinerTest {
         void testExtractMaximal_Support60Percent() {
             assertTimeoutPreemptively(OPERATION_TIMEOUT, () -> {
                 Map<String, String> params = Parameters.empty().withParam(MIN_SUPPORT_PARAM, 0.6).getHashMap();
-                List<MiningResult> results = miner.extractMaximal(datasetPath, params);
+                List<MiningResult> results = miner.extractMaximal(datasetPath, params, () -> false);
 
                 assertNotNull(results, "Results should not be null");
                 assertFalse(results.isEmpty(), "Results should not be empty");
@@ -369,7 +368,7 @@ public abstract class MinerTest {
         void testExtractMaximal_Support80Percent() {
             assertTimeoutPreemptively(OPERATION_TIMEOUT, () -> {
                 Map<String, String> params = Parameters.empty().withParam(MIN_SUPPORT_PARAM, 0.8).getHashMap();
-                List<MiningResult> results = miner.extractMaximal(datasetPath, params);
+                List<MiningResult> results = miner.extractMaximal(datasetPath, params, () -> false);
 
                 assertNotNull(results, "Results should not be null");
                 assertFalse(results.isEmpty(), "Results should not be empty");
@@ -388,7 +387,7 @@ public abstract class MinerTest {
         void testExtractMaximal_Support20Percent() {
             assertTimeoutPreemptively(OPERATION_TIMEOUT, () -> {
                 Map<String, String> params = Parameters.empty().withParam(MIN_SUPPORT_PARAM, 0.2).getHashMap();
-                List<MiningResult> results = miner.extractMaximal(datasetPath, params);
+                List<MiningResult> results = miner.extractMaximal(datasetPath, params, () -> false);
 
                 assertNotNull(results, "Results should not be null");
                 assertFalse(results.isEmpty(), "Results should not be empty");
@@ -411,7 +410,7 @@ public abstract class MinerTest {
         @DisplayName("Invalid Parameters - Negative Support")
         void testExtractMaximal_NegativeSupport() {
             Map<String, String> params = Parameters.empty().withParam(MIN_SUPPORT_PARAM, -0.1).getHashMap();
-            assertThrows(ParameterException.class, () -> miner.extractMaximal(datasetPath, params));
+            assertThrows(ParameterException.class, () -> miner.extractMaximal(datasetPath, params, () -> false));
         }
     }
 
@@ -423,7 +422,7 @@ public abstract class MinerTest {
         void testExtractRare_MaxSupport40Percent() {
             assertTimeoutPreemptively(OPERATION_TIMEOUT, () -> {
                 Map<String, String> params = Parameters.empty().withParam(MAX_SUPPORT_PARAM, 0.4).getHashMap();
-                List<MiningResult> results = miner.extractRare(datasetPath, params);
+                List<MiningResult> results = miner.extractRare(datasetPath, params, () -> false);
 
                 assertNotNull(results, "Results should not be null");
                 assertFalse(results.isEmpty(), "Results should not be empty");
@@ -450,7 +449,7 @@ public abstract class MinerTest {
         void testExtractRare_MaxSupport30Percent() {
             assertTimeoutPreemptively(OPERATION_TIMEOUT, () -> {
                 Map<String, String> params = Parameters.empty().withParam(MAX_SUPPORT_PARAM, 0.3).getHashMap();
-                List<MiningResult> results = miner.extractRare(datasetPath, params);
+                List<MiningResult> results = miner.extractRare(datasetPath, params, () -> false);
 
                 assertNotNull(results, "Results should not be null");
                 assertFalse(results.isEmpty(), "Results should not be empty");
@@ -476,7 +475,7 @@ public abstract class MinerTest {
         @DisplayName("Invalid parameters - Too low support threshold")
         void testExtractRare_TooLowSupport() {
             Map<String, String> params = Parameters.empty().withParam(MAX_SUPPORT_PARAM, 0).getHashMap();
-            assertThrows(ParameterException.class, () -> miner.extractRare(datasetPath, params));
+            assertThrows(ParameterException.class, () -> miner.extractRare(datasetPath, params, () -> false));
         }
     }
 
@@ -488,7 +487,7 @@ public abstract class MinerTest {
         void testExtractGenerators_Support60Percent() {
             assertTimeoutPreemptively(OPERATION_TIMEOUT, () -> {
                 Map<String, String> params = Parameters.empty().withParam(MIN_SUPPORT_PARAM, 0.6).getHashMap();
-                List<MiningResult> results = miner.extractGenerators(datasetPath, params);
+                List<MiningResult> results = miner.extractGenerators(datasetPath, params, () -> false);
 
                 assertNotNull(results, "Results should not be null");
                 assertFalse(results.isEmpty(), "Results should not be empty");
@@ -510,7 +509,7 @@ public abstract class MinerTest {
         void testExtractGenerators_Support80Percent() {
             assertTimeoutPreemptively(OPERATION_TIMEOUT, () -> {
                 Map<String, String> params = Parameters.empty().withParam(MIN_SUPPORT_PARAM, 0.8).getHashMap();
-                List<MiningResult> results = miner.extractGenerators(datasetPath, params);
+                List<MiningResult> results = miner.extractGenerators(datasetPath, params, () -> false);
 
                 assertNotNull(results, "Results should not be null");
                 assertFalse(results.isEmpty(), "Results should not be empty");
@@ -529,7 +528,7 @@ public abstract class MinerTest {
         @DisplayName("Invalid Parameters - Negative Support")
         void testExtractGenerators_NegativeSupport() {
             Map<String, String> params = Parameters.empty().withParam(MIN_SUPPORT_PARAM, -0.1).getHashMap();
-            assertThrows(ParameterException.class, () -> miner.extractGenerators(datasetPath, params));
+            assertThrows(ParameterException.class, () -> miner.extractGenerators(datasetPath, params, () -> false));
         }
     }
 
@@ -541,7 +540,7 @@ public abstract class MinerTest {
         void testExtractMinimal_MaxSupport40Percent() {
             assertTimeoutPreemptively(OPERATION_TIMEOUT, () -> {
                 Map<String, String> params = Parameters.empty().withParam(MAX_SUPPORT_PARAM, 0.4).getHashMap();
-                List<MiningResult> results = miner.extractMinimal(datasetPath, params);
+                List<MiningResult> results = miner.extractMinimal(datasetPath, params, () -> false);
 
                 assertNotNull(results, "Results should not be null");
                 assertFalse(results.isEmpty(), "Results should not be empty");
@@ -559,7 +558,7 @@ public abstract class MinerTest {
         void testExtractMinimal_MaxSupport70Percent() {
             assertTimeoutPreemptively(OPERATION_TIMEOUT, () -> {
                 Map<String, String> params = Parameters.empty().withParam(MAX_SUPPORT_PARAM, 0.7).getHashMap();
-                List<MiningResult> results = miner.extractMinimal(datasetPath, params);
+                List<MiningResult> results = miner.extractMinimal(datasetPath, params, () -> false);
 
                 assertNotNull(results, "Results should not be null");
                 assertFalse(results.isEmpty(), "Results should not be empty");
@@ -579,7 +578,7 @@ public abstract class MinerTest {
         @DisplayName("Invalid parameters - Too low support threshold")
         void testExtractMinimal_TooLowSupport() {
             Map<String, String> params = Parameters.empty().withParam(MAX_SUPPORT_PARAM, 0).getHashMap();
-            assertThrows(ParameterException.class, () -> miner.extractMinimal(datasetPath, params));
+            assertThrows(ParameterException.class, () -> miner.extractMinimal(datasetPath, params, () -> false));
         }
     }
 
@@ -596,7 +595,7 @@ public abstract class MinerTest {
                         .withParam(MIN_SIZE_PARAM, 1)
                         .withParam(MAX_SIZE_PARAM, 1)
                         .getHashMap();
-                List<MiningResult> results = miner.extractSizeBetween(datasetPath, params);
+                List<MiningResult> results = miner.extractSizeBetween(datasetPath, params, () -> false);
 
                 assertNotNull(results, "Results should not be null");
                 assertFalse(results.isEmpty(), "Results should not be empty");
@@ -623,7 +622,7 @@ public abstract class MinerTest {
                         .withParam(MIN_SIZE_PARAM, 2)
                         .withParam(MAX_SIZE_PARAM, 3)
                         .getHashMap();
-                List<MiningResult> results = miner.extractSizeBetween(datasetPath, params);
+                List<MiningResult> results = miner.extractSizeBetween(datasetPath, params, () -> false);
 
                 assertNotNull(results, "Results should not be null");
                 assertFalse(results.isEmpty(), "Results should not be empty");
@@ -652,7 +651,7 @@ public abstract class MinerTest {
                         .withParam(MIN_SIZE_PARAM, 4)
                         .withParam(MAX_SIZE_PARAM, 5)
                         .getHashMap();
-                List<MiningResult> results = miner.extractSizeBetween(datasetPath, params);
+                List<MiningResult> results = miner.extractSizeBetween(datasetPath, params, () -> false);
 
                 assertNotNull(results, "Results should not be null");
 
@@ -679,7 +678,7 @@ public abstract class MinerTest {
                     .withParam(MIN_SIZE_PARAM, 3)
                     .withParam(MAX_SIZE_PARAM, 2)
                     .getHashMap();
-            assertThrows(ParameterException.class, () -> miner.extractSizeBetween(datasetPath, params));
+            assertThrows(ParameterException.class, () -> miner.extractSizeBetween(datasetPath, params, () -> false));
         }
 
         @Test
@@ -690,7 +689,7 @@ public abstract class MinerTest {
                     .withParam(MIN_SIZE_PARAM, 0)
                     .withParam(MAX_SIZE_PARAM, 2)
                     .getHashMap();
-            assertThrows(ParameterException.class, () -> miner.extractSizeBetween(datasetPath, params));
+            assertThrows(ParameterException.class, () -> miner.extractSizeBetween(datasetPath, params, () -> false));
         }
 
         @Test
@@ -700,13 +699,13 @@ public abstract class MinerTest {
                     .withParam(MIN_SUPPORT_PARAM, 0.6)
                     .withParam(MAX_SIZE_PARAM, 3) // Missing MIN_SIZE_PARAM
                     .getHashMap();
-            assertThrows(ParameterException.class, () -> miner.extractSizeBetween(datasetPath, params));
+            assertThrows(ParameterException.class, () -> miner.extractSizeBetween(datasetPath, params, () -> false));
 
             Map<String, String> params2 = Parameters.empty()
                     .withParam(MIN_SUPPORT_PARAM, 0.6)
                     .withParam(MIN_SIZE_PARAM, 1) // Missing MAX_SIZE_PARAM
                     .getHashMap();
-            assertThrows(ParameterException.class, () -> miner.extractSizeBetween(datasetPath, params2));
+            assertThrows(ParameterException.class, () -> miner.extractSizeBetween(datasetPath, params2, () -> false));
         }
     }
 
@@ -722,7 +721,7 @@ public abstract class MinerTest {
                         .withParam(MIN_SUPPORT_PARAM, 0.6)
                         .withParam(ITEMS_PARAM, "1")
                         .getHashMap();
-                List<MiningResult> results = miner.extractPresence(datasetPath, params);
+                List<MiningResult> results = miner.extractPresence(datasetPath, params, () -> false);
 
                 assertNotNull(results, "Results should not be null");
                 assertFalse(results.isEmpty(), "Results should not be empty");
@@ -748,7 +747,7 @@ public abstract class MinerTest {
                         .withParam(MIN_SUPPORT_PARAM, 0.6)
                         .withParam(ITEMS_PARAM, "1,3")
                         .getHashMap();
-                List<MiningResult> results = miner.extractPresence(datasetPath, params);
+                List<MiningResult> results = miner.extractPresence(datasetPath, params, () -> false);
 
                 assertNotNull(results, "Results should not be null");
                 assertFalse(results.isEmpty(), "Results should not be empty");
@@ -776,7 +775,7 @@ public abstract class MinerTest {
                         .withParam(MIN_SUPPORT_PARAM, 0.6)
                         .withParam(ITEMS_PARAM, "4")
                         .getHashMap();
-                List<MiningResult> results = miner.extractPresence(datasetPath, params);
+                List<MiningResult> results = miner.extractPresence(datasetPath, params, () -> false);
 
                 assertNotNull(results, "Results should not be null");
                 assertTrue(results.isEmpty(),
@@ -792,7 +791,7 @@ public abstract class MinerTest {
                         .withParam(MIN_SUPPORT_PARAM, 0.6)
                         .withParam(ITEMS_PARAM, "99") // Item 99 doesn't exist
                         .getHashMap();
-                List<MiningResult> results = miner.extractPresence(datasetPath, params);
+                List<MiningResult> results = miner.extractPresence(datasetPath, params, () -> false);
 
                 assertNotNull(results, "Results should not be null");
                 assertFalse(results.isEmpty(), "Results should not be empty as it defaults to closed frequent mining");
@@ -816,7 +815,7 @@ public abstract class MinerTest {
                         .withParam(ITEMS_PARAM, "a,b,c")
                         .getHashMap();
 
-                List<MiningResult> results = miner.extractPresence(datasetPath, params);
+                List<MiningResult> results = miner.extractPresence(datasetPath, params, () -> false);
                 assertNotNull(results, "Results should not be null");
                 assertFalse(results.isEmpty(), "Results should not be empty as it defaults to closed frequent mining");
 
@@ -835,7 +834,7 @@ public abstract class MinerTest {
         @DisplayName("Missing items parameter")
         void testExtractPresence_MissingItemsParam() {
             Map<String, String> params = Parameters.empty().withParam(MIN_SUPPORT_PARAM, 0.6).getHashMap();
-            assertThrows(ParameterException.class, () -> miner.extractPresence(datasetPath, params));
+            assertThrows(ParameterException.class, () -> miner.extractPresence(datasetPath, params, () -> false));
         }
     }
 
@@ -851,7 +850,7 @@ public abstract class MinerTest {
                         .withParam(MIN_SUPPORT_PARAM, 0.6)
                         .withParam(ITEMS_PARAM, "4")
                         .getHashMap();
-                List<MiningResult> results = miner.extractAbsence(datasetPath, params);
+                List<MiningResult> results = miner.extractAbsence(datasetPath, params, () -> false);
 
                 assertNotNull(results, "Results should not be null");
                 assertFalse(results.isEmpty(), "Results should not be empty");
@@ -880,7 +879,7 @@ public abstract class MinerTest {
                         .withParam(MIN_SUPPORT_PARAM, 0.6)
                         .withParam(ITEMS_PARAM, "3")
                         .getHashMap();
-                List<MiningResult> results = miner.extractAbsence(datasetPath, params);
+                List<MiningResult> results = miner.extractAbsence(datasetPath, params, () -> false);
 
                 assertNotNull(results, "Results should not be null");
                 assertFalse(results.isEmpty(), "Results should not be empty");
@@ -906,7 +905,7 @@ public abstract class MinerTest {
                         .withParam(MIN_SUPPORT_PARAM, 0.2)
                         .withParam(ITEMS_PARAM, "2,5") // items 2 AND 5 must be absent
                         .getHashMap();
-                List<MiningResult> results = miner.extractAbsence(datasetPath, params);
+                List<MiningResult> results = miner.extractAbsence(datasetPath, params, () -> false);
 
                 assertNotNull(results, "Results should not be null");
                 assertFalse(results.isEmpty(), "Results should not be empty");
@@ -932,7 +931,7 @@ public abstract class MinerTest {
         @DisplayName("Missing items parameter")
         void testExtractAbsence_MissingItemsParam() {
             Map<String, String> params = Parameters.empty().withParam(MIN_SUPPORT_PARAM, 0.6).getHashMap();
-            assertThrows(ParameterException.class, () -> miner.extractAbsence(datasetPath, params));
+            assertThrows(ParameterException.class, () -> miner.extractAbsence(datasetPath, params, () -> false));
         }
     }
 
@@ -944,7 +943,8 @@ public abstract class MinerTest {
         @DisplayName("Non-existent Dataset Path")
         void testNonExistentDatasetPath() {
             Map<String, String> params = Parameters.empty().withParam(MIN_SUPPORT_PARAM, 0.6).getHashMap();
-            assertThrows(MiningException.class, () -> miner.extractFrequent("non_existent_path.dat", params));
+            assertThrows(MiningException.class,
+                    () -> miner.extractFrequent("non_existent_path.dat", params, () -> false));
         }
 
         @Test
@@ -952,7 +952,7 @@ public abstract class MinerTest {
         void testMaximumPossibleSupport() {
             assertTimeoutPreemptively(OPERATION_TIMEOUT, () -> {
                 Map<String, String> params = Parameters.empty().withParam(MIN_SUPPORT_PARAM, 1.0).getHashMap();
-                List<MiningResult> results = miner.extractFrequent(datasetPath, params);
+                List<MiningResult> results = miner.extractFrequent(datasetPath, params, () -> false);
 
                 assertNotNull(results, "Results should not be null");
                 assertTrue(results.isEmpty(), "Results should be empty as no itemset has 100% support");
@@ -963,7 +963,7 @@ public abstract class MinerTest {
         @DisplayName("Support = 0.0 - Tests behavior at minimum possible support")
         void testMinimumPossibleSupport() {
             Map<String, String> params = Parameters.empty().withParam(MIN_SUPPORT_PARAM, 0.0).getHashMap();
-            assertThrows(ParameterException.class, () -> miner.extractFrequent(datasetPath, params));
+            assertThrows(ParameterException.class, () -> miner.extractFrequent(datasetPath, params, () -> false));
         }
 
         @Test
@@ -971,7 +971,7 @@ public abstract class MinerTest {
         void testJustAboveZeroSupport() {
             assertTimeoutPreemptively(OPERATION_TIMEOUT, () -> {
                 Map<String, String> params = Parameters.empty().withParam(MIN_SUPPORT_PARAM, 0.01).getHashMap();
-                List<MiningResult> results = miner.extractFrequent(datasetPath, params);
+                List<MiningResult> results = miner.extractFrequent(datasetPath, params, () -> false);
 
                 assertNotNull(results, "Results should not be null");
                 assertFalse(results.isEmpty(), "Results should not be empty");
