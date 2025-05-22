@@ -26,18 +26,23 @@ export const queryTypes = [
 
 export const queryTooltips = {
   frequent:
-    "Extraire tous les motifs dont le support est supérieur au seuil minimum.",
-  closed: "Extraire les motifs fermés (sans sur-ensemble de même support).",
-  maximal: "Extraire les motifs maximaux (sans sur-ensemble fréquent).",
-  rare: "Extraire les motifs rares (support faible mais informatif).",
-  generators: "Extraire les motifs générateurs (sous-ensembles minimaux).",
-  minimal: "Extraire les motifs minimaux selon le critère spécifié.",
+    "Motifs Fréquents : Extraire tous les motifs dont le support est supérieur ou égal au seuil minimum (freq(P) ≥ α).",
+  closed:
+    "Motifs Fermés Fréquents : Extraire les motifs où freq(P) ≥ α et aucun sur-ensemble strict n'a exactement la même fréquence.",
+  maximal:
+    "Motifs Maximaux Fréquents : Extraire les motifs où freq(P) ≥ α et aucun de leurs sur-ensembles n'est fréquent.",
+  rare: 
+    "Motifs Rares : Extraire les motifs dont le support est strictement inférieur au seuil minimum (freq(P) < α).",
+  generators:
+    "Motifs Générateurs Fréquents : Extraire les motifs où freq(P) ≥ α et aucun de leurs sous-ensembles stricts n'a exactement la même fréquence.",
+  minimal:
+    "Motifs Minimaux Rares : Extraire les motifs où freq(P) < α et tous leurs sous-ensembles sont fréquents.",
   size_between:
-    "Extraire les motifs fermés dont la taille est comprise entre min et max, et respectant le support minimum.",
+    "Motifs Fermés de Taille Contrainte : Extraire les motifs fermés dont la taille est comprise entre min et max, avec freq(P) ≥ α.",
   presence:
-    "Extraire les motifs fermés contenant les items spécifiés et respectant le support minimum.",
+    "Motifs Fermés avec Items Présents : Extraire les motifs fermés qui contiennent obligatoirement les items spécifiés, avec freq(P) ≥ α.",
   absence:
-    "Extraire les motifs fermés ne contenant pas les items spécifiés et respectant le support minimum.",
+    "Motifs Fermés avec Items Absents : Extraire les motifs fermés qui ne contiennent aucun des items spécifiés, avec freq(P) ≥ α.",
 };
 
 // Helper function to get default params based on query type
