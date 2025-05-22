@@ -1,6 +1,6 @@
 # Project CGKS: Declarative & Specialized Itemset Mining
 
-This project is a full-stack application for motif mining, featuring:
+This project is a full-stack application for itemset mining, featuring:
 - A Java backend (Spring Boot, Maven)
 - A Python model (training and classifier API)
 - A React frontend
@@ -30,7 +30,8 @@ This project is a full-stack application for motif mining, featuring:
 ├── frontend-docs/swagger-ui/   # Swagger UI docs
 ````
 
-Quick Start
+## Quick Start
+
 1. Clone the repository
 ```
 git clone https://github.com/Projets-FSO/projet-isd-cgks.git
