@@ -32,7 +32,7 @@ export const queryTooltips = {
   maximal:
     "Motifs Maximaux Fréquents : Extraire les motifs où freq(P) ≥ α et aucun de leurs sur-ensembles n'est fréquent.",
   rare: 
-    "Motifs Rares : Extraire les motifs dont le support est strictement inférieur au seuil minimum (freq(P) < α).",
+    "Motifs Rares : Extraire les motifs dont le support est strictement inférieur au seuil minimum (freq(P) < α) et contiennent au moins un sous-ensemble rare de taille 1 ",
   generators:
     "Motifs Générateurs Fréquents : Extraire les motifs où freq(P) ≥ α et aucun de leurs sous-ensembles stricts n'a exactement la même fréquence.",
   minimal:
