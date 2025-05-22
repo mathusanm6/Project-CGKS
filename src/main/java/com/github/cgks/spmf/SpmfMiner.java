@@ -809,7 +809,7 @@ public class SpmfMiner implements Miner {
      */
     private static String fileToPath(String file) throws DatabaseException {
         try {
-            URL url = TestSPMF.class.getResource(file);
+            URL url = SpmfMiner.class.getResource(file);
             return java.net.URLDecoder.decode(url.getPath(), "UTF-8");
         } catch (Exception e) {
             throw new DatabaseException("Error loading dataset: " + file + e.getMessage(), e);
