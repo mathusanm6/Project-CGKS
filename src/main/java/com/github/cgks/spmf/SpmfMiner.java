@@ -72,6 +72,11 @@ public class SpmfMiner implements Miner {
 
     private static final Logger LOGGER = Logger.getLogger(SpmfMiner.class.getName());
 
+    /**
+     * Checks if mining operation should be cancelled.
+     * @param cancellationChecker Supplier function that returns true if cancellation requested
+     * @throws InterruptedException if cancellation detected
+     */
     private void checkCancellation(BooleanSupplier cancellationChecker) throws InterruptedException {
         if (cancellationChecker.getAsBoolean()) {
             LOGGER.info("SPMF Mining task cancelled");
@@ -79,360 +84,719 @@ public class SpmfMiner implements Miner {
         }
     }
 
+    
+    
+        /**
+     * Extracts frequent itemsets from a dataset using the LCM algorithm.
+     * This method implements the extraction of frequent patterns according to
+     * the specified minimum support threshold.
+     *
+     * @param datasetPath The file path to the dataset to be analyzed
+     * @param params A map containing algorithm parameters, must include "minSupport"
+     * @param cancellationChecker A supplier that returns true if the operation should be cancelled
+     * @return A list of mining results containing the discovered frequent itemsets
+     * @throws MiningException If any error occurs during the mining process
+     * @throws ParameterException If required parameters are missing or invalid
+     * @throws DatabaseException If there is an issue with the dataset
+     */
     @Override
     public List<MiningResult> extractFrequent(String datasetPath, Map<String, String> params,
-            BooleanSupplier cancellationChecker) throws MiningException {
+            BooleanSupplier cancellationChecker) throws  MiningException, ParameterException, DatabaseException {
         try {
+            // Check if operation has been cancelled before starting
             checkCancellation(cancellationChecker);
+            
+            // Validate that required parameters are present
             validateParams(params, "minSupport");
+            
+            // Load dataset from the provided path
             Dataset dataset = pathToDataset(datasetPath);
-            Double minSupport = parseMinSupport(params);
-            AlgoLCMFreq algo = new AlgoLCMFreq();
+            
+            // Parse the minimum support threshold parameter
+            double minSupportThreshold = parseMinSupport(params);
+            
+            // Initialize the LCM Frequent Itemsets algorithm
+            AlgoLCMFreq algorithm = new AlgoLCMFreq();
+            
+            // Check if operation has been cancelled before running algorithm
             checkCancellation(cancellationChecker);
-            Itemsets itemsets = algo.runAlgorithm(minSupport, dataset, null);
+            
+            // Execute the algorithm with the specified parameters
+            Itemsets discoveredItemsets = algorithm.runAlgorithm(minSupportThreshold, dataset, null);
+            
+            // Check if operation has been cancelled before processing results
             checkCancellation(cancellationChecker);
-            return ConvertToMiningResult.convertItemsetsToMiningResults(itemsets);
+            
+            // Convert the SPMF-specific format to the application's result format
+            return ConvertToMiningResult.convertItemsetsToMiningResults(discoveredItemsets);
         } catch (InterruptedException e) {
+            // Restore the interrupted status
             Thread.currentThread().interrupt();
             throw new MiningException("Mining task was cancelled by user.", e);
         } catch (ParameterException | DatabaseException e) {
+            // Re-throw specific exceptions without wrapping
             throw e;
         } catch (Exception e) {
+            // Check if the operation was cancelled during execution
             if (cancellationChecker.getAsBoolean()) {
                 throw new MiningException("Mining task was cancelled during operation.", e);
             }
+            // Handle unexpected errors
             throw new MiningException("Unexpected error in extractFrequent: " + e.getMessage(), e);
         }
     }
 
+        /**
+     * Extracts closed itemsets from a dataset using the LCM algorithm.
+     * Closed itemsets are itemsets that have no superset with the same support,
+     * making them a concise representation of frequent patterns.
+     *
+     * @param datasetPath The file path to the dataset to be analyzed
+     * @param params A map containing algorithm parameters, must include "minSupport"
+     * @param cancellationChecker A supplier that returns true if the operation should be cancelled
+     * @return A list of mining results containing the discovered closed itemsets
+     * @throws MiningException If any error occurs during the mining process
+     * @throws ParameterException If required parameters are missing or invalid
+     * @throws DatabaseException If there is an issue with the dataset
+     */
     @Override
     public List<MiningResult> extractClosed(String datasetPath, Map<String, String> params,
-            BooleanSupplier cancellationChecker) throws MiningException {
+            BooleanSupplier cancellationChecker) throws  MiningException, ParameterException, DatabaseException {
         try {
+            // Check if operation has been cancelled before starting
             checkCancellation(cancellationChecker);
+            
+            // Validate that required parameters are present
             validateParams(params, "minSupport");
+            
+            // Load dataset from the provided path
             Dataset dataset = pathToDataset(datasetPath);
-            Double minSupport = parseMinSupport(params);
-            AlgoLCM algo = new AlgoLCM();
+            
+            // Parse the minimum support threshold parameter
+            double minSupportThreshold = parseMinSupport(params);
+            
+            // Initialize the LCM Closed Itemsets algorithm
+            AlgoLCM algorithm = new AlgoLCM();
+            
+            // Check if operation has been cancelled before running algorithm
             checkCancellation(cancellationChecker);
-            Itemsets itemsets = algo.runAlgorithm(minSupport, dataset, null);
+            
+            // Execute the algorithm with the specified parameters
+            Itemsets closedItemsets = algorithm.runAlgorithm(minSupportThreshold, dataset, null);
+            
+            // Check if operation has been cancelled before processing results
             checkCancellation(cancellationChecker);
-            return ConvertToMiningResult.convertItemsetsToMiningResults(itemsets);
+            
+            // Convert the SPMF-specific format to the application's result format
+            return ConvertToMiningResult.convertItemsetsToMiningResults(closedItemsets);
         } catch (InterruptedException e) {
+            // Restore the interrupted status
             Thread.currentThread().interrupt();
             throw new MiningException("Mining task was cancelled by user.", e);
         } catch (ParameterException | DatabaseException e) {
+            // Re-throw specific exceptions without wrapping
             throw e;
         } catch (Exception e) {
+            // Check if the operation was cancelled during execution
             if (cancellationChecker.getAsBoolean()) {
                 throw new MiningException("Mining task was cancelled during operation.", e);
             }
+            // Handle unexpected errors
             throw new MiningException("Unexpected error in extractClosed: " + e.getMessage(), e);
         }
     }
 
+
+        /**
+     * Extracts maximal itemsets from a dataset using the FPMax algorithm.
+     * Maximal itemsets are frequent itemsets that have no frequent supersets,
+     * providing a compact representation of the frequent pattern space.
+     *
+     * @param datasetPath The file path to the dataset to be analyzed
+     * @param params A map containing algorithm parameters, must include "minSupport"
+     * @param cancellationChecker A supplier that returns true if the operation should be cancelled
+     * @return A list of mining results containing the discovered maximal itemsets
+     * @throws MiningException If any error occurs during the mining process
+     * @throws ParameterException If required parameters are missing or invalid
+     * @throws DatabaseException If there is an issue with the dataset
+     */
     @Override
     public List<MiningResult> extractMaximal(String datasetPath, Map<String, String> params,
-            BooleanSupplier cancellationChecker) throws MiningException {
+            BooleanSupplier cancellationChecker) throws  MiningException, ParameterException, DatabaseException {
         try {
+            // Check if operation has been cancelled before starting
             checkCancellation(cancellationChecker);
+            
+            // Validate that required parameters are present
             validateParams(params, "minSupport");
-            Double minSupport = parseMinSupport(params);
-            String inputPath = fileToPath(datasetPath); // Resolve path once
-            AlgoFPMax algo = new AlgoFPMax();
+            
+            // Parse the minimum support threshold parameter
+            double minSupportThreshold = parseMinSupport(params);
+            
+            // Resolve the path to the dataset file
+            String resolvedFilePath = fileToPath(datasetPath);
+            
+            // Initialize the FPMax algorithm for maximal itemset mining
+            AlgoFPMax algorithm = new AlgoFPMax();
+            
+            // Check if operation has been cancelled before running algorithm
             checkCancellation(cancellationChecker);
-            Itemsets itemsets = algo.runAlgorithm(inputPath, null, minSupport);
+            
+            // Execute the algorithm with the specified parameters
+            Itemsets maximalItemsets = algorithm.runAlgorithm(resolvedFilePath, null, minSupportThreshold);
+            
+            // Check if operation has been cancelled before processing results
             checkCancellation(cancellationChecker);
-            return ConvertToMiningResult.convertItemsetsToMiningResults(itemsets);
+            
+            // Convert the SPMF-specific format to the application's result format
+            return ConvertToMiningResult.convertItemsetsToMiningResults(maximalItemsets);
         } catch (InterruptedException e) {
+            // Restore the interrupted status
             Thread.currentThread().interrupt();
             throw new MiningException("Mining task was cancelled by user.", e);
         } catch (ParameterException | DatabaseException e) {
+            // Re-throw specific exceptions without wrapping
             throw e;
         } catch (Exception e) {
+            // Check if the operation was cancelled during execution
             if (cancellationChecker.getAsBoolean()) {
                 throw new MiningException("Mining task was cancelled during operation.", e);
             }
+            // Handle unexpected errors
             throw new MiningException("Unexpected error in extractMaximal: " + e.getMessage(), e);
         }
     }
 
+
+        /**
+     * Extracts rare itemsets from a dataset using the RPGrowth algorithm.
+     * Rare itemsets are those with a support lower than the specified maximum support threshold,
+     * representing patterns that occur infrequently in the dataset.
+     *
+     * @param datasetPath The file path to the dataset to be analyzed
+     * @param params A map containing algorithm parameters, must include "maxSupport"
+     * @param cancellationChecker A supplier that returns true if the operation should be cancelled
+     * @return A list of mining results containing the discovered rare itemsets
+     * @throws MiningException If any error occurs during the mining process
+     * @throws ParameterException If required parameters are missing or invalid
+     * @throws DatabaseException If there is an issue with the dataset
+     */
     @Override
     public List<MiningResult> extractRare(String datasetPath, Map<String, String> params,
-            BooleanSupplier cancellationChecker) throws MiningException {
+            BooleanSupplier cancellationChecker) throws  MiningException, ParameterException, DatabaseException {
         try {
+            // Check if operation has been cancelled before starting
             checkCancellation(cancellationChecker);
-            validateParams(params, "maxSupport"); // RPGrowth uses maxSupport
-            Double maxSupport = parseMaxSupport(params);
-            AlgoRPGrowth algo = new AlgoRPGrowth();
+            
+            // Validate that required parameters are present (RPGrowth uses maxSupport)
+            validateParams(params, "maxSupport");
+            
+            // Parse the maximum support threshold parameter
+            double maxSupportThreshold = parseMaxSupport(params);
+            
+            // Initialize the RPGrowth algorithm for rare itemset mining
+            AlgoRPGrowth algorithm = new AlgoRPGrowth();
+            
+            // Check if operation has been cancelled before running algorithm
             checkCancellation(cancellationChecker);
-            Itemsets itemsets = algo.runAlgorithm(fileToPath(datasetPath), null, maxSupport, 0);
+            
+            // Execute the algorithm with the specified parameters
+            // Last parameter 0 represents minimum support (0 to get all rare itemsets)
+            Itemsets rareItemsets = algorithm.runAlgorithm(
+                fileToPath(datasetPath), 
+                null, 
+                maxSupportThreshold, 
+                0 // Minimum rare support threshold of 0
+            );
+            
+            // Check if operation has been cancelled before processing results
             checkCancellation(cancellationChecker);
-            return ConvertToMiningResult.convertItemsetsToMiningResults(itemsets);
+            
+            // Convert the SPMF-specific format to the application's result format
+            return ConvertToMiningResult.convertItemsetsToMiningResults(rareItemsets);
         } catch (InterruptedException e) {
+            // Restore the interrupted status
             Thread.currentThread().interrupt();
             throw new MiningException("Mining task was cancelled by user.", e);
         } catch (ParameterException | DatabaseException e) {
+            // Re-throw specific exceptions without wrapping
             throw e;
         } catch (Exception e) {
+            // Check if the operation was cancelled during execution
             if (cancellationChecker.getAsBoolean()) {
                 throw new MiningException("Mining task was cancelled during operation.", e);
             }
+            // Handle unexpected errors
             throw new MiningException("Unexpected error in extractRare: " + e.getMessage(), e);
         }
     }
 
+
+        /**
+     * Extracts minimal generators from a dataset using the ZART algorithm.
+     * Minimal generators are minimal itemsets that determine a closed itemset,
+     * providing a non-redundant representation of association rules.
+     *
+     * @param datasetPath The file path to the dataset to be analyzed
+     * @param params A map containing algorithm parameters, must include "minSupport"
+     * @param cancellationChecker A supplier that returns true if the operation should be cancelled
+     * @return A list of mining results containing the discovered minimal generators
+     * @throws MiningException If any error occurs during the mining process
+     * @throws ParameterException If required parameters are missing or invalid
+     * @throws DatabaseException If there is an issue with the dataset
+     */
     @Override
     public List<MiningResult> extractGenerators(String datasetPath, Map<String, String> params,
-            BooleanSupplier cancellationChecker) throws MiningException {
+            BooleanSupplier cancellationChecker) throws  MiningException, ParameterException, DatabaseException {
         try {
+            // Check if operation has been cancelled before starting
             checkCancellation(cancellationChecker);
+            
+            // Validate that required parameters are present
             validateParams(params, "minSupport");
-            TransactionDatabase context = readTransactionDatabase(datasetPath);
-            Double minSupport = parseMinSupport(params);
-            AlgoZart algo = new AlgoZart();
+            
+            // Load and prepare transaction database from the provided path
+            TransactionDatabase transactionDatabase = readTransactionDatabase(datasetPath);
+            
+            // Parse the minimum support threshold parameter
+            double minSupportThreshold = parseMinSupport(params);
+            
+            // Initialize the ZART algorithm for mining closed itemsets and their generators
+            AlgoZart algorithm = new AlgoZart();
+            
+            // Check if operation has been cancelled before running algorithm
             checkCancellation(cancellationChecker);
-            TZTableClosed results = algo.runAlgorithm(context, minSupport);
+            
+            // Execute the algorithm with the specified parameters
+            TZTableClosed algorithmResults = algorithm.runAlgorithm(transactionDatabase, minSupportThreshold);
+            
+            // Check if operation has been cancelled before processing results
             checkCancellation(cancellationChecker);
-            Itemsets itemsets = new Itemsets("Generator itemset");
-            for (int i = 1; i < results.levels.size(); i++) {
+            
+            // Create container for generator itemsets
+            Itemsets generatorItemsets = new Itemsets("Generator itemset");
+            
+            // Process the results, extracting generators for each level except empty set level 0
+            for (int level = 1; level < algorithmResults.levels.size(); level++) {
+                // Check if operation has been cancelled during processing
                 checkCancellation(cancellationChecker);
-                for (Itemset closed : results.levels.get(i)) {
-                    List<Itemset> generators = results.mapGenerators.get(closed);
-                    // if there are some generators
-                    if (generators.size() != 0) {
+                
+                // Process each closed itemset at current level
+                for (Itemset closedItemset : algorithmResults.levels.get(level)) {
+                    // Get the generators associated with this closed itemset
+                    List<Itemset> generators = algorithmResults.mapGenerators.get(closedItemset);
+                    
+                    // If generators exist for this closed itemset, add them all
+                    if (!generators.isEmpty()) {
                         for (Itemset generator : generators) {
-                            itemsets.addItemset(generator, i);
+                            generatorItemsets.addItemset(generator, level);
                         }
                     } else {
-                        // otherwise the closed itemset is a generator
-                        itemsets.addItemset(closed, i);
+                        // If no generators, the closed itemset itself is a generator
+                        generatorItemsets.addItemset(closedItemset, level);
                     }
                 }
             }
-            return ConvertToMiningResult.convertItemsetsToMiningResults(itemsets);
+            
+            // Convert the SPMF-specific format to the application's result format
+            return ConvertToMiningResult.convertItemsetsToMiningResults(generatorItemsets);
         } catch (InterruptedException e) {
+            // Restore the interrupted status
             Thread.currentThread().interrupt();
             throw new MiningException("Mining task was cancelled by user.", e);
         } catch (ParameterException | DatabaseException e) {
+            // Re-throw specific exceptions without wrapping
             throw e;
         } catch (Exception e) {
+            // Check if the operation was cancelled during execution
             if (cancellationChecker.getAsBoolean()) {
                 throw new MiningException("Mining task was cancelled during operation.", e);
             }
+            // Handle unexpected errors
             throw new MiningException("Unexpected error in extractGenerators: " + e.getMessage(), e);
         }
     }
 
+
+        /**
+     * Extracts minimal rare itemsets from a dataset using the Apriori-Rare algorithm.
+     * Minimal rare itemsets are those that are rare (with support below the maximum threshold)
+     * but all their proper subsets are frequent, providing the most concise representation
+     * of rare patterns.
+     *
+     * @param datasetPath The file path to the dataset to be analyzed
+     * @param params A map containing algorithm parameters, must include "maxSupport"
+     * @param cancellationChecker A supplier that returns true if the operation should be cancelled
+     * @return A list of mining results containing the discovered minimal rare itemsets
+     * @throws MiningException If any error occurs during the mining process
+     * @throws ParameterException If required parameters are missing or invalid
+     * @throws DatabaseException If there is an issue with the dataset
+     */
     @Override
     public List<MiningResult> extractMinimal(String datasetPath, Map<String, String> params,
-            BooleanSupplier cancellationChecker) throws MiningException {
+            BooleanSupplier cancellationChecker) throws MiningException, ParameterException, DatabaseException {
         try {
+            // Check if operation has been cancelled before starting
             checkCancellation(cancellationChecker);
+            
+            // Validate that required parameters are present
             validateParams(params, "maxSupport");
-            Double maxSupport = parseMaxSupport(params);
-            AlgoAprioriRare algo = new AlgoAprioriRare();
+            
+            // Parse the maximum support threshold parameter
+            double maxSupportThreshold = parseMaxSupport(params);
+            
+            // Initialize the Apriori-Rare algorithm for minimal rare itemset mining
+            AlgoAprioriRare algorithm = new AlgoAprioriRare();
+            
+            // Check if operation has been cancelled before running algorithm
             checkCancellation(cancellationChecker);
-            Itemsets itemsets = algo.runAlgorithm(maxSupport, fileToPath(datasetPath), null);
+            
+            // Execute the algorithm with the specified parameters
+            Itemsets minimalRareItemsets = algorithm.runAlgorithm(
+                maxSupportThreshold, 
+                fileToPath(datasetPath), 
+                null // No output file specified, results kept in memory
+            );
+            
+            // Check if operation has been cancelled before processing results
             checkCancellation(cancellationChecker);
-            return ConvertToMiningResult.convertItemsetsToMiningResults(itemsets);
+            
+            // Convert the SPMF-specific format to the application's result format
+            return ConvertToMiningResult.convertItemsetsToMiningResults(minimalRareItemsets);
         } catch (InterruptedException e) {
+            // Restore the interrupted status
             Thread.currentThread().interrupt();
             throw new MiningException("Mining task was cancelled by user.", e);
         } catch (ParameterException | DatabaseException e) {
+            // Re-throw specific exceptions without wrapping
             throw e;
         } catch (Exception e) {
+            // Check if the operation was cancelled during execution
             if (cancellationChecker.getAsBoolean()) {
                 throw new MiningException("Mining task was cancelled during operation.", e);
             }
+            // Handle unexpected errors
             throw new MiningException("Unexpected error in extractMinimal: " + e.getMessage(), e);
         }
     }
 
+
+        /**
+     * Extracts itemsets with sizes falling within a specified range using the LCM algorithm.
+     * This method first mines closed itemsets, then filters them based on their size,
+     * keeping only those within the specified size range.
+     *
+     * @param datasetPath The file path to the dataset to be analyzed
+     * @param params A map containing algorithm parameters, must include "minSize", "maxSize", and "minSupport"
+     * @param cancellationChecker A supplier that returns true if the operation should be cancelled
+     * @return A list of mining results containing the discovered itemsets within the size range
+     * @throws MiningException If any error occurs during the mining process
+     * @throws ParameterException If required parameters are missing or invalid
+     * @throws DatabaseException If there is an issue with the dataset
+     */
     @Override
     public List<MiningResult> extractSizeBetween(String datasetPath, Map<String, String> params,
-            BooleanSupplier cancellationChecker) throws MiningException {
+            BooleanSupplier cancellationChecker) throws  MiningException, ParameterException, DatabaseException {
         try {
+            // Check if operation has been cancelled before starting
             checkCancellation(cancellationChecker);
+            
+            // Validate that all required parameters are present
             validateParams(params, "minSize", "maxSize", "minSupport");
+            
+            // Load and prepare dataset from the provided path
             Dataset dataset = pathToDataset(datasetPath);
             int datasetSize = dataset.getTransactions().size();
-            Double minSupport = parseMinSupport(params);
+            
+            // Parse the minimum support threshold parameter
+            double minSupportThreshold = parseMinSupport(params);
 
-            int minSize, maxSize;
+            // Parse and validate the size range parameters
+            int minimumItemsetSize, maximumItemsetSize;
             try {
-                minSize = Integer.parseInt(params.get("minSize"));
-                maxSize = Integer.parseInt(params.get("maxSize"));
+                minimumItemsetSize = Integer.parseInt(params.get("minSize"));
+                maximumItemsetSize = Integer.parseInt(params.get("maxSize"));
             } catch (NumberFormatException e) {
                 throw new ParameterException("Invalid minSize or maxSize parameters: " + e.getMessage());
             }
 
-            if (minSize < 1) {
+            // Validate minimum size constraint
+            if (minimumItemsetSize < 1) {
                 throw new ParameterException("minSize must be at least 1");
             }
 
-            if (maxSize < minSize) {
+            // Validate that maximum size is greater than or equal to minimum size
+            if (maximumItemsetSize < minimumItemsetSize) {
                 throw new ParameterException("maxSize must be greater than or equal to minSize");
             }
 
-            if (maxSize > datasetSize) {
+            // Cap the maximum size to the dataset size if necessary
+            if (maximumItemsetSize > datasetSize) {
                 LOGGER.warning("maxSize is greater than the number of items in the database. " +
                         "Setting maxSize to the number of items: " + datasetSize);
-                maxSize = datasetSize;
+                maximumItemsetSize = datasetSize;
             }
 
-            AlgoLCM algo = new AlgoLCM();
+            // Initialize the LCM algorithm for closed itemset mining
+            AlgoLCM algorithm = new AlgoLCM();
+            
+            // Check if operation has been cancelled before running algorithm
             checkCancellation(cancellationChecker);
-            Itemsets itemsets = algo.runAlgorithm(minSupport, dataset, null);
+            
+            // Execute the algorithm to find all closed itemsets
+            Itemsets allClosedItemsets = algorithm.runAlgorithm(minSupportThreshold, dataset, null);
+            
+            // Check if operation has been cancelled before filtering results
             checkCancellation(cancellationChecker);
 
-            Itemsets results = new Itemsets(String.format("Itemsets de taille %d à %d", minSize, maxSize));
-            for (List<Itemset> level : itemsets.getLevels()) {
+            // Create a new container for filtered itemsets
+            Itemsets filteredItemsets = new Itemsets(
+                String.format("Itemsets de taille %d à %d", minimumItemsetSize, maximumItemsetSize)
+            );
+            
+            // Filter itemsets based on size criteria
+            for (List<Itemset> level : allClosedItemsets.getLevels()) {
                 checkCancellation(cancellationChecker);
                 for (Itemset itemset : level) {
-                    int size = itemset.size();
-                    if (size >= minSize && size <= maxSize) {
-                        results.addItemset(itemset, size);
+                    int itemsetSize = itemset.size();
+                    if (itemsetSize >= minimumItemsetSize && itemsetSize <= maximumItemsetSize) {
+                        filteredItemsets.addItemset(itemset, itemsetSize);
                     }
                 }
             }
-            return ConvertToMiningResult.convertItemsetsToMiningResults(results);
+            
+            // Convert the SPMF-specific format to the application's result format
+            return ConvertToMiningResult.convertItemsetsToMiningResults(filteredItemsets);
         } catch (InterruptedException e) {
+            // Restore the interrupted status
             Thread.currentThread().interrupt();
             throw new MiningException("Mining task was cancelled by user.", e);
         } catch (ParameterException | DatabaseException e) {
+            // Re-throw specific exceptions without wrapping
             throw e;
         } catch (Exception e) {
+            // Check if the operation was cancelled during execution
             if (cancellationChecker.getAsBoolean()) {
                 throw new MiningException("Mining task was cancelled during operation.", e);
             }
+            // Handle unexpected errors
             throw new MiningException("Unexpected error in extractSizeBetween: " + e.getMessage(), e);
         }
     }
 
+
+    /**
+     * Extracts itemsets that contain specific items of interest using the LCM algorithm.
+     * This method mines closed itemsets, then filters them to keep only those containing all specified items.
+     *
+     * @param datasetPath The file path to the dataset to be analyzed
+     * @param params A map containing algorithm parameters, must include "minSupport" and "items"
+     * @param cancellationChecker A supplier that returns true if the operation should be cancelled
+     * @return A list of mining results containing the discovered itemsets that contain all required items
+     * @throws MiningException If any error occurs during the mining process
+     * @throws ParameterException If required parameters are missing or invalid
+     * @throws DatabaseException If there is an issue with the dataset
+     */
     @Override
     public List<MiningResult> extractPresence(String datasetPath, Map<String, String> params,
-            BooleanSupplier cancellationChecker) throws MiningException {
+            BooleanSupplier cancellationChecker) throws MiningException, ParameterException, DatabaseException {
         try {
+            // Check if operation has been cancelled before starting
             checkCancellation(cancellationChecker);
+            
+            // Validate that all required parameters are present
             validateParams(params, "minSupport", "items");
-            Double minSupport = parseMinSupport(params);
-            String param = params.get("items");
-            List<Integer> requiredItems = parseItems(param);
+            
+            // Parse the minimum support threshold parameter
+            double minSupportThreshold = parseMinSupport(params);
+            
+            // Parse the list of items that must be present in results
+            String itemsParameter = params.get("items");
+            List<Integer> requiredItems = parseItems(itemsParameter);
+            
+            // Load and prepare dataset from the provided path
             Dataset dataset = pathToDataset(datasetPath);
-            AlgoLCM algo = new AlgoLCM();
+            
+            // Initialize the LCM algorithm for closed itemset mining
+            AlgoLCM algorithm = new AlgoLCM();
+            
+            // Check if operation has been cancelled before running algorithm
             checkCancellation(cancellationChecker);
-            Itemsets itemsets = algo.runAlgorithm(minSupport, dataset, null);
+            
+            // Execute the algorithm to find all closed itemsets
+            Itemsets allClosedItemsets = algorithm.runAlgorithm(minSupportThreshold, dataset, null);
+            
+            // Check if operation has been cancelled before filtering results
             checkCancellation(cancellationChecker);
 
-            Itemsets results = new Itemsets("Itemsets contenant tous: " + requiredItems);
+            // Create a new container for filtered itemsets
+            Itemsets filteredItemsets = new Itemsets("Itemsets contenant tous: " + requiredItems);
 
+            // Get the set of all unique items in the dataset
             Set<Integer> datasetItems = dataset.getUniqueItems();
 
-            // Filter required items to only include those in the dataset
+            // Filter required items to only include those present in the dataset
             List<Integer> filteredRequiredItems = requiredItems.stream()
                     .filter(datasetItems::contains)
                     .collect(Collectors.toList());
 
-            // Cas spécial: si aucun item requis, on retourne tout
-            if (filteredRequiredItems == null || filteredRequiredItems.isEmpty()) {
-                return ConvertToMiningResult.convertItemsetsToMiningResults(itemsets);
+            // Special case: if no required items remain after filtering, return all itemsets
+            if (filteredRequiredItems.isEmpty()) {
+                return ConvertToMiningResult.convertItemsetsToMiningResults(allClosedItemsets);
             }
 
-            // Tri des items requis pour la recherche binaire
-            List<Integer> sortedRequired = new ArrayList<>(filteredRequiredItems);
-            Collections.sort(sortedRequired);
+            // Sort the required items list for more efficient containment checking
+            List<Integer> sortedRequiredItems = new ArrayList<>(filteredRequiredItems);
+            Collections.sort(sortedRequiredItems);
 
-            // Filter itemsets, checking for cancellation periodically
-            for (List<Itemset> level : itemsets.getLevels()) {
+            // Filter itemsets to keep only those containing all required items
+            for (List<Itemset> level : allClosedItemsets.getLevels()) {
                 checkCancellation(cancellationChecker);
                 for (Itemset itemset : level) {
-                    if (containsAllRequired(itemset, sortedRequired)) {
-                        results.addItemset(itemset, itemset.size());
+                    if (containsAllRequired(itemset, sortedRequiredItems)) {
+                        filteredItemsets.addItemset(itemset, itemset.size());
                     }
                 }
             }
 
-            return ConvertToMiningResult.convertItemsetsToMiningResults(results);
+            // Convert the SPMF-specific format to the application's result format
+            return ConvertToMiningResult.convertItemsetsToMiningResults(filteredItemsets);
         } catch (InterruptedException e) {
+            // Restore the interrupted status
             Thread.currentThread().interrupt();
             throw new MiningException("Mining task was cancelled by user.", e);
         } catch (ParameterException | DatabaseException e) {
+            // Re-throw specific exceptions without wrapping
             throw e;
         } catch (Exception e) {
+            // Check if the operation was cancelled during execution
             if (cancellationChecker.getAsBoolean()) {
                 throw new MiningException("Mining task was cancelled during operation.", e);
             }
+            // Handle unexpected errors
             throw new MiningException("Unexpected error in extractPresence: " + e.getMessage(), e);
         }
     }
 
+
+    /**
+     * Extracts itemsets that do not contain any of the specified excluded items using the LCM algorithm.
+     * This method mines closed itemsets, then filters them to keep only those containing none of the excluded items.
+     *
+     * @param datasetPath The file path to the dataset to be analyzed
+     * @param params A map containing algorithm parameters, must include "minSupport" and "items" (to exclude)
+     * @param cancellationChecker A supplier that returns true if the operation should be cancelled
+     * @return A list of mining results containing the discovered itemsets that exclude all specified items
+     * @throws MiningException If any error occurs during the mining process
+     * @throws ParameterException If required parameters are missing or invalid
+     * @throws DatabaseException If there is an issue with the dataset
+     */
     @Override
     public List<MiningResult> extractAbsence(String datasetPath, Map<String, String> params,
-            BooleanSupplier cancellationChecker) throws MiningException {
+            BooleanSupplier cancellationChecker) throws MiningException, ParameterException, DatabaseException {
         try {
+            // Check if operation has been cancelled before starting
             checkCancellation(cancellationChecker);
+            
+            // Validate that all required parameters are present
             validateParams(params, "minSupport", "items");
-            Double minSupport = parseMinSupport(params);
+            
+            // Parse the minimum support threshold parameter
+            double minSupportThreshold = parseMinSupport(params);
+            
+            // Parse the list of items that must be absent from results
             List<Integer> excludedItems = parseItems(params.get("items"));
+            
+            // Load and prepare dataset from the provided path
             Dataset dataset = pathToDataset(datasetPath);
 
-            AlgoLCM algo = new AlgoLCM();
+            // Initialize the LCM algorithm for closed itemset mining
+            AlgoLCM algorithm = new AlgoLCM();
+            
+            // Check if operation has been cancelled before running algorithm
             checkCancellation(cancellationChecker);
-            Itemsets itemsets = algo.runAlgorithm(minSupport, dataset, null);
+            
+            // Execute the algorithm to find all closed itemsets
+            Itemsets allClosedItemsets = algorithm.runAlgorithm(minSupportThreshold, dataset, null);
+            
+            // Check if operation has been cancelled before filtering results
             checkCancellation(cancellationChecker);
 
-            Itemsets results = new Itemsets("Itemsets sans: " + excludedItems);
+            // Create a new container for filtered itemsets
+            Itemsets filteredItemsets = new Itemsets("Itemsets sans: " + excludedItems);
 
-            if (excludedItems == null || excludedItems.isEmpty()) {
-                return ConvertToMiningResult.convertItemsetsToMiningResults(itemsets);
+            // Special case: if no excluded items, return all itemsets
+            if (excludedItems.isEmpty()) {
+                return ConvertToMiningResult.convertItemsetsToMiningResults(allClosedItemsets);
             }
 
-            List<Integer> sortedExcluded = new ArrayList<>(excludedItems);
-            Collections.sort(sortedExcluded);
+            // Sort the excluded items list for more efficient containment checking
+            List<Integer> sortedExcludedItems = new ArrayList<>(excludedItems);
+            Collections.sort(sortedExcludedItems);
 
-            for (List<Itemset> level : itemsets.getLevels()) {
+            // Filter itemsets to keep only those not containing any excluded items
+            for (List<Itemset> level : allClosedItemsets.getLevels()) {
                 checkCancellation(cancellationChecker);
                 for (Itemset itemset : level) {
-                    if (!containsAny(itemset.getItems(), sortedExcluded)) {
-                        results.addItemset(itemset, itemset.size());
+                    if (!containsAny(itemset.getItems(), sortedExcludedItems)) {
+                        filteredItemsets.addItemset(itemset, itemset.size());
                     }
                 }
             }
 
-            return ConvertToMiningResult.convertItemsetsToMiningResults(results);
+            // Convert the SPMF-specific format to the application's result format
+            return ConvertToMiningResult.convertItemsetsToMiningResults(filteredItemsets);
         } catch (InterruptedException e) {
+            // Restore the interrupted status
             Thread.currentThread().interrupt();
             throw new MiningException("Mining task was cancelled by user.", e);
         } catch (ParameterException | DatabaseException e) {
+            // Re-throw specific exceptions without wrapping
             throw e;
         } catch (Exception e) {
+            // Check if the operation was cancelled during execution
             if (cancellationChecker.getAsBoolean()) {
                 throw new MiningException("Mining task was cancelled during operation.", e);
             }
+            // Handle unexpected errors
             throw new MiningException("Unexpected error in extractAbsence: " + e.getMessage(), e);
         }
     }
 
-    /**
-     * Vérifie si un itemset contient tous les items requis (version optimisée
-     * List<Integer>)
+
+        /**
+     * Determines if an itemset contains all the required items.
+     * This method checks whether every item in the requiredItems list is present in the given itemset.
+     * 
+     * @param itemset The itemset to check, containing items to be verified
+     * @param requiredItems A sorted list of items that must all be present in the itemset
+     * @return true if the itemset contains all required items, false otherwise
      */
     private static boolean containsAllRequired(Itemset itemset, List<Integer> requiredItems) {
+        // Convert the primitive int array to a List<Integer> for easier comparison
         List<Integer> itemsetItems = Arrays.stream(itemset.getItems())
                 .boxed()
                 .collect(Collectors.toList());
+        
+        // Check if all required items are present in the itemset
         return itemsetItems.containsAll(requiredItems);
     }
 
     /**
-     * Vérifie si un tableau contient au moins un item interdit (version optimisée
-     * List<Integer>)
+     * Determines if an array of items contains any of the excluded items.
+     * This method uses binary search for efficient checking, assuming the excludedItems list is sorted.
+     * 
+     * @param items The array of items to check against the excluded items
+     * @param excludedItems A sorted list of items that should be absent from the array
+     * @return true if any excluded item is found in the array, false if none are present
      */
     private static boolean containsAny(int[] items, List<Integer> excludedItems) {
+        // Use binary search for efficient containment checking
+        // This requires that excludedItems is already sorted
         return Arrays.stream(items)
                 .anyMatch(item -> Collections.binarySearch(excludedItems, item) >= 0);
     }
+
 
     /**
      * Converts a resource file path to an absolute file system path.
@@ -562,5 +926,4 @@ public class SpmfMiner implements Miner {
         }
         return result;
     }
-
 }
