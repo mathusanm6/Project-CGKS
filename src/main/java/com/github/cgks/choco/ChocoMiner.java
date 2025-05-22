@@ -102,35 +102,66 @@ public class ChocoMiner implements Miner {
         }
     }
 
+        /**
+     * Extracts frequent itemsets from a dataset using a constraint programming approach.
+     * This method implements the mining process using the Choco Solver constraint programming library
+     * to find all itemsets that meet the minimum support threshold.
+     *
+     * @param datasetPath The file path to the dataset to be analyzed
+     * @param params A map containing algorithm parameters, must include "minSupport" 
+     * @param cancellationChecker A supplier that returns true if the operation should be cancelled
+     * @return A list of mining results containing the discovered frequent itemsets
+     * @throws MiningException If any error occurs during the mining process
+     * @throws ParameterException If required parameters are missing or invalid
+     * @throws DatabaseException If there is an issue with the dataset
+     */
     @Override
     public List<MiningResult> extractFrequent(String datasetPath, Map<String, String> params,
-            BooleanSupplier cancellationChecker) throws MiningException {
+            BooleanSupplier cancellationChecker) throws MiningException, ParameterException, DatabaseException {
         try {
+            // Check if operation has been cancelled before starting
             checkCancellation(cancellationChecker);
+            
+            // Validate that all required parameters are present
             validateParams(params, "minSupport");
 
-            // Read the transactional database
+            // Load the dataset as a transactional database
             TransactionalDatabase database = readTransactionalDatabase(datasetPath);
-            int minSupport = parseMinSupport(params, database);
+            
+            // Parse and validate the minimum support threshold
+            int minSupportCount = parseMinSupport(params, database);
 
-            LOGGER.info("Starting frequent itemset mining with minSupport: " + minSupport);
+            LOGGER.info("Starting frequent itemset mining with minSupport: " + minSupportCount);
 
+            // Create a constraint programming model for mining
             Model model = new Model("Frequent Itemset Mining");
-            BoolVar[] x = model.boolVarArray("x", database.getNbItems());
-            IntVar freq = model.intVar("freq", 1, database.getNbTransactions());
+            
+            // Define decision variables:
+            // - x[i] is true if item i is in the itemset
+            BoolVar[] itemSelectionVars = model.boolVarArray("x", database.getNbItems());
+            
+            // - freq represents the support count (number of transactions covering the itemset)
+            IntVar supportCountVar = model.intVar("freq", 1, database.getNbTransactions());
 
-            // Post constraint
-            model.arithm(freq, ">=", minSupport).post();
-            ConstraintFactory.coverSize(database, freq, x).post();
+            // Post the minimum support constraint
+            model.arithm(supportCountVar, ">=", minSupportCount).post();
+            
+            // Post the coverage constraint (defines the relationship between items and their frequency)
+            ConstraintFactory.coverSize(database, supportCountVar, itemSelectionVars).post();
 
+            // Configure the solver
             Solver solver = model.getSolver();
-            solver.setSearch(Search.inputOrderLBSearch(x));
+            solver.setSearch(Search.inputOrderLBSearch(itemSelectionVars));
             List<MiningResult> results = new ArrayList<>();
 
             try {
+                // Find all solutions (itemsets) that satisfy the constraints
                 while (solver.solve()) {
+                    // Check for cancellation after each solution
                     checkCancellation(cancellationChecker);
-                    MiningResult result = getMiningResult(database, x, freq);
+                    
+                    // Extract the current solution as a mining result
+                    MiningResult result = getMiningResult(database, itemSelectionVars, supportCountVar);
                     results.add(result);
                 }
             } catch (Exception e) {
@@ -139,7 +170,7 @@ public class ChocoMiner implements Miner {
 
             LOGGER.info("Frequent itemset mining completed. Found " + results.size() + " results.");
 
-            // Empty itemsets are not allowed
+            // Remove any empty itemsets from the results
             filterOutEmptyItemsets(results);
 
             return results;
@@ -148,6 +179,7 @@ public class ChocoMiner implements Miner {
             LOGGER.info("Frequent itemset mining cancelled.");
             throw new MiningException("Mining cancelled by user.", e);
         } catch (ParameterException | DatabaseException e) {
+            // Re-throw specific exceptions without wrapping
             throw e;
         } catch (Exception e) {
             if (cancellationChecker.getAsBoolean()) {
@@ -158,35 +190,72 @@ public class ChocoMiner implements Miner {
         }
     }
 
+
+        /**
+     * Extracts closed itemsets from a dataset using a constraint programming approach.
+     * A closed itemset is a frequent itemset that has no proper superset with the same support.
+     * This method uses the Choco Solver constraint programming library to find all closed itemsets
+     * that meet the minimum support threshold.
+     *
+     * @param datasetPath The file path to the dataset to be analyzed
+     * @param params A map containing algorithm parameters, must include "minSupport"
+     * @param cancellationChecker A supplier that returns true if the operation should be cancelled
+     * @return A list of mining results containing the discovered closed itemsets
+     * @throws MiningException If any error occurs during the mining process
+     * @throws ParameterException If required parameters are missing or invalid
+     * @throws DatabaseException If there is an issue with the dataset
+     */
     @Override
     public List<MiningResult> extractClosed(String datasetPath, Map<String, String> params,
-            BooleanSupplier cancellationChecker) throws MiningException {
+            BooleanSupplier cancellationChecker) throws MiningException, ParameterException, DatabaseException {
         try {
+            // Check if operation has been cancelled before starting
             checkCancellation(cancellationChecker);
+            
+            // Validate that all required parameters are present
             validateParams(params, "minSupport");
 
-            // Read the transactional database
+            // Load the dataset as a transactional database
             TransactionalDatabase database = readTransactionalDatabase(datasetPath);
-            int minSupport = parseMinSupport(params, database);
+            
+            // Parse and validate the minimum support threshold
+            int minSupportCount = parseMinSupport(params, database);
 
-            LOGGER.info("Starting closed itemset mining with minSupport: " + minSupport);
+            LOGGER.info("Starting closed itemset mining with minSupport: " + minSupportCount);
 
+            // Create a constraint programming model for mining closed itemsets
             Model model = new Model("Closed Itemset Mining");
-            BoolVar[] x = model.boolVarArray("x", database.getNbItems());
-            IntVar freq = model.intVar("freq", 1, database.getNbTransactions());
+            
+            // Define decision variables:
+            // - x[i] is true if item i is in the itemset
+            BoolVar[] itemSelectionVars = model.boolVarArray("x", database.getNbItems());
+            
+            // - freq represents the support count (number of transactions covering the itemset)
+            IntVar supportCountVar = model.intVar("freq", 1, database.getNbTransactions());
 
-            // Post constraints
-            model.arithm(freq, ">=", minSupport).post();
-            ConstraintFactory.coverSize(database, freq, x).post();
-            ConstraintFactory.coverClosure(database, x).post();
+            // Post the minimum support constraint
+            model.arithm(supportCountVar, ">=", minSupportCount).post();
+            
+            // Post the coverage constraint (defines the relationship between items and their frequency)
+            ConstraintFactory.coverSize(database, supportCountVar, itemSelectionVars).post();
+            
+            // Post the closure constraint (ensures the itemset is closed)
+            // A closed itemset cannot be extended with any additional item without reducing its support
+            ConstraintFactory.coverClosure(database, itemSelectionVars).post();
+            
+            // Configure the solver with an appropriate search strategy
             Solver solver = model.getSolver();
-            solver.setSearch(Search.minDomUBSearch(x));
+            solver.setSearch(Search.minDomUBSearch(itemSelectionVars));
             List<MiningResult> results = new ArrayList<>();
 
             try {
+                // Find all solutions (closed itemsets) that satisfy the constraints
                 while (solver.solve()) {
+                    // Check for cancellation after each solution
                     checkCancellation(cancellationChecker);
-                    MiningResult result = getMiningResult(database, x, freq);
+                    
+                    // Extract the current solution as a mining result
+                    MiningResult result = getMiningResult(database, itemSelectionVars, supportCountVar);
                     results.add(result);
                 }
             } catch (Exception e) {
@@ -195,7 +264,7 @@ public class ChocoMiner implements Miner {
 
             LOGGER.info("Closed itemset mining completed. Found " + results.size() + " results.");
 
-            // Empty itemsets are not allowed
+            // Remove any empty itemsets from the results
             filterOutEmptyItemsets(results);
 
             return results;
@@ -204,6 +273,7 @@ public class ChocoMiner implements Miner {
             LOGGER.info("Closed itemset mining cancelled.");
             throw new MiningException("Mining cancelled by user.", e);
         } catch (ParameterException | DatabaseException e) {
+            // Re-throw specific exceptions without wrapping
             throw e;
         } catch (Exception e) {
             if (cancellationChecker.getAsBoolean()) {
@@ -214,36 +284,73 @@ public class ChocoMiner implements Miner {
         }
     }
 
+
+        /**
+     * Extracts maximal itemsets from a dataset using a constraint programming approach.
+     * A maximal itemset is a frequent itemset that has no frequent proper superset.
+     * This method uses the Choco Solver constraint programming library to find all maximal itemsets
+     * that meet the minimum support threshold.
+     *
+     * @param datasetPath The file path to the dataset to be analyzed
+     * @param params A map containing algorithm parameters, must include "minSupport"
+     * @param cancellationChecker A supplier that returns true if the operation should be cancelled
+     * @return A list of mining results containing the discovered maximal itemsets
+     * @throws MiningException If any error occurs during the mining process
+     * @throws ParameterException If required parameters are missing or invalid
+     * @throws DatabaseException If there is an issue with the dataset
+     */
     @Override
     public List<MiningResult> extractMaximal(String datasetPath, Map<String, String> params,
-            BooleanSupplier cancellationChecker) throws MiningException {
+            BooleanSupplier cancellationChecker) throws MiningException, ParameterException, DatabaseException {
         try {
+            // Check if operation has been cancelled before starting
             checkCancellation(cancellationChecker);
+            
+            // Validate that all required parameters are present
             validateParams(params, "minSupport");
 
-            // Read the transactional database
+            // Load the dataset as a transactional database
             TransactionalDatabase database = readTransactionalDatabase(datasetPath);
-            int minSupport = parseMinSupport(params, database);
+            
+            // Parse and validate the minimum support threshold
+            int minSupportCount = parseMinSupport(params, database);
 
-            LOGGER.info("Starting maximal itemset mining with minSupport: " + minSupport);
+            LOGGER.info("Starting maximal itemset mining with minSupport: " + minSupportCount);
 
+            // Create a constraint programming model for mining maximal itemsets
             Model model = new Model("Maximal Itemset Mining");
-            BoolVar[] x = model.boolVarArray("x", database.getNbItems());
-            IntVar freq = model.intVar("freq", 1, database.getNbTransactions());
+            
+            // Define decision variables:
+            // - x[i] is true if item i is in the itemset
+            BoolVar[] itemSelectionVars = model.boolVarArray("x", database.getNbItems());
+            
+            // - freq represents the support count (number of transactions covering the itemset)
+            IntVar supportCountVar = model.intVar("freq", 1, database.getNbTransactions());
 
-            // Post constraints
-            model.arithm(freq, ">=", minSupport).post();
-            ConstraintFactory.coverSize(database, freq, x).post();
-            ConstraintFactory.infrequentSupers(database, minSupport, x).post();
-
+            // Post the minimum support constraint
+            model.arithm(supportCountVar, ">=", minSupportCount).post();
+            
+            // Post the coverage constraint (defines the relationship between items and their frequency)
+            ConstraintFactory.coverSize(database, supportCountVar, itemSelectionVars).post();
+            
+            // Post the maximality constraint (ensures the itemset is maximal)
+            // A maximal itemset cannot have any superset that is also frequent
+            ConstraintFactory.infrequentSupers(database, minSupportCount, itemSelectionVars).post();
+            
+            // Configure the solver with an appropriate search strategy
+            // Using upper bound search helps find larger itemsets first
             Solver solver = model.getSolver();
-            solver.setSearch(Search.inputOrderUBSearch(x));
+            solver.setSearch(Search.inputOrderUBSearch(itemSelectionVars));
             List<MiningResult> results = new ArrayList<>();
 
             try {
+                // Find all solutions (maximal itemsets) that satisfy the constraints
                 while (solver.solve()) {
+                    // Check for cancellation after each solution
                     checkCancellation(cancellationChecker);
-                    MiningResult result = getMiningResult(database, x, freq);
+                    
+                    // Extract the current solution as a mining result
+                    MiningResult result = getMiningResult(database, itemSelectionVars, supportCountVar);
                     results.add(result);
                 }
             } catch (Exception e) {
@@ -252,7 +359,7 @@ public class ChocoMiner implements Miner {
 
             LOGGER.info("Maximal itemset mining completed. Found " + results.size() + " results.");
 
-            // Empty itemsets are not allowed
+            // Remove any empty itemsets from the results
             filterOutEmptyItemsets(results);
 
             return results;
@@ -261,6 +368,7 @@ public class ChocoMiner implements Miner {
             LOGGER.info("Maximal itemset mining cancelled.");
             throw new MiningException("Mining cancelled by user.", e);
         } catch (ParameterException | DatabaseException e) {
+            // Re-throw specific exceptions without wrapping
             throw e;
         } catch (Exception e) {
             if (cancellationChecker.getAsBoolean()) {
@@ -271,6 +379,20 @@ public class ChocoMiner implements Miner {
         }
     }
 
+
+    /**
+     * Extracts rare itemsets from a dataset using a constraint programming approach.
+     * A rare itemset is one that appears in fewer transactions than the specified maximum support threshold.
+     * This implementation ensures that each returned itemset contains at least one rare singleton item.
+     *
+     * @param datasetPath The file path to the dataset to be analyzed
+     * @param params A map containing algorithm parameters, must include "maxSupport"
+     * @param cancellationChecker A supplier that returns true if the operation should be cancelled
+     * @return A list of mining results containing the discovered rare itemsets
+     * @throws MiningException If any error occurs during the mining process
+     * @throws ParameterException If required parameters are missing or invalid
+     * @throws DatabaseException If there is an issue with the dataset
+     */
     @Override
     public List<MiningResult> extractRare(String datasetPath, Map<String, String> params,
             BooleanSupplier cancellationChecker) throws MiningException {
@@ -278,68 +400,90 @@ public class ChocoMiner implements Miner {
             checkCancellation(cancellationChecker);
             validateParams(params, "maxSupport");
 
-            // Read the transactional database
+            // Load the dataset as a transactional database
             TransactionalDatabase database = readTransactionalDatabase(datasetPath);
-            int maxSupport = parseMaxSupport(params, database);
+            int maxSupportCount = parseMaxSupport(params, database);
 
-            // maxSupport is excluded as upperbound
-            if (maxSupport <= 1) {
+            // Ensure maxSupport is meaningful (must allow at least some transactions)
+            if (maxSupportCount <= 1) {
                 throw new ParameterException(
                         "For rare itemset mining, maxSupport must result in a value greater than 1");
             }
 
-            LOGGER.info("Starting rare itemset mining with maxSupport: " + maxSupport);
+            LOGGER.info("Starting rare itemset mining with maxSupport: " + maxSupportCount);
 
-            Model model = new Model("Rare Itemset Mining");
-            BoolVar[] x = model.boolVarArray("x", database.getNbItems());
-            IntVar freq = model.intVar("freq", 1, database.getNbTransactions());
+            // PHASE 1: Identify rare singleton items (items that appear in fewer than maxSupport transactions)
+            Model identificationModel = new Model("Rare Item Identification");
+            BoolVar[] candidateVars = identificationModel.boolVarArray("x", database.getNbItems());
+            IntVar supportVar = identificationModel.intVar("freq", 1, database.getNbTransactions());
 
-            Solver solver = model.getSolver();
-            solver.setSearch(Search.minDomLBSearch(x));
-            // Post constraint
-            model.arithm(freq, "<", maxSupport).post();
-            ConstraintFactory.coverSize(database, freq, x).post();
+            // Setup solver for identification phase
+            Solver identificationSolver = identificationModel.getSolver();
+            identificationSolver.setSearch(Search.minDomLBSearch(candidateVars));
+            
+            // Add constraints for rare item identification
+            identificationModel.arithm(supportVar, "<", maxSupportCount).post();
+            ConstraintFactory.coverSize(database, supportVar, candidateVars).post();
 
-            // We need to add a constraint to ensure that at least one rare item is included
-            // First, identify rare items (items with support < maxSupport)
+            // Track which items are rare singletons
             boolean[] rareItems = new boolean[database.getNbItems()];
-            while (solver.solve()) {
+            
+            // Find all rare singleton items
+            while (identificationSolver.solve()) {
                 checkCancellation(cancellationChecker);
-                int[] itemset = IntStream.range(0, x.length)
-                        .filter(i -> x[i].getValue() == 1)
+                int[] itemset = IntStream.range(0, candidateVars.length)
+                        .filter(i -> candidateVars[i].getValue() == 1)
                         .map(i -> database.getItems()[i])
                         .toArray();
-                if (itemset.length <= 1)
+                        
+                // If this is a singleton set, mark the item as rare
+                if (itemset.length == 1) {
                     rareItems[itemset[0] - 1] = true;
+                }
             }
+            
+            // Log rare singleton items for debugging
             int index = 0;
-            for (boolean b : rareItems) {
-                if (b) {
-                    System.err.println("rare set of size 1 : " + (index + 1));
+            for (boolean isRare : rareItems) {
+                if (isRare) {
+                    LOGGER.fine("Identified rare singleton item: " + (index + 1));
                 }
                 checkCancellation(cancellationChecker);
                 index++;
             }
-            solver.reset();
 
-            // Add constraint: at least one rare item must be included
+            // PHASE 2: Extract all rare itemsets that contain at least one rare singleton item
+            Model extractionModel = new Model("Rare Itemset Mining");
+            BoolVar[] itemVars = extractionModel.boolVarArray("x", database.getNbItems());
+            IntVar freqVar = extractionModel.intVar("freq", 1, database.getNbTransactions());
+
+            // Setup main constraints
+            extractionModel.arithm(freqVar, "<", maxSupportCount).post();
+            ConstraintFactory.coverSize(database, freqVar, itemVars).post();
+
+            // Add constraint: at least one rare singleton item must be included in each result
             BoolVar[] rareItemVars = new BoolVar[database.getNbItems()];
             for (int i = 0; i < database.getNbItems(); i++) {
                 if (rareItems[i]) {
-                    rareItemVars[i] = x[i];
+                    rareItemVars[i] = itemVars[i];
                 } else {
                     // Non-rare items don't contribute to this constraint
-                    rareItemVars[i] = model.boolVar(false);
+                    rareItemVars[i] = extractionModel.boolVar(false);
                 }
             }
-            model.sum(rareItemVars, ">=", 1).post();
+            extractionModel.sum(rareItemVars, ">=", 1).post();
 
+            // Setup solver for extraction phase
+            Solver extractionSolver = extractionModel.getSolver();
+            extractionSolver.setSearch(Search.minDomLBSearch(itemVars));
+            
             List<MiningResult> results = new ArrayList<>();
 
             try {
-                while (solver.solve()) {
+                // Find all rare itemsets that satisfy our constraints
+                while (extractionSolver.solve()) {
                     checkCancellation(cancellationChecker);
-                    MiningResult result = getMiningResult(database, x, freq);
+                    MiningResult result = getMiningResult(database, itemVars, freqVar);
                     results.add(result);
                 }
             } catch (Exception e) {
@@ -367,338 +511,520 @@ public class ChocoMiner implements Miner {
         }
     }
 
+
+        /**
+     * Extracts generator itemsets from a dataset using a constraint programming approach.
+     * A generator is a minimal itemset among all itemsets having the same support value.
+     * In other words, no proper subset of a generator can have the same support.
+     * 
+     * @param datasetPath The file path to the dataset to be analyzed
+     * @param params A map containing algorithm parameters, must include "minSupport"
+     * @param cancellationChecker A supplier that returns true if the operation should be cancelled
+     * @return A list of mining results containing the discovered generator itemsets
+     * @throws MiningException If any error occurs during the mining process
+     * @throws ParameterException If required parameters are missing or invalid
+     * @throws DatabaseException If there is an issue with the dataset
+     */
     @Override
     public List<MiningResult> extractGenerators(String datasetPath, Map<String, String> params,
             BooleanSupplier cancellationChecker) throws MiningException {
         try {
+            // Check if operation has been cancelled before starting
             checkCancellation(cancellationChecker);
+            
+            // Validate that all required parameters are present
             validateParams(params, "minSupport");
 
-            // Read the transactional database
+            // Load the dataset as a transactional database
             TransactionalDatabase database = readTransactionalDatabase(datasetPath);
-            int minSupport = parseMinSupport(params, database);
+            
+            // Parse and validate the minimum support threshold
+            int minSupportCount = parseMinSupport(params, database);
 
-            LOGGER.info("Starting generators mining with minSupport: " + minSupport);
+            LOGGER.info("Starting generator itemset mining with minSupport: " + minSupportCount);
 
+            // Create a constraint programming model for mining generator itemsets
             Model model = new Model("Generators Mining");
-            BoolVar[] x = model.boolVarArray("x", database.getNbItems());
-            IntVar freq = model.intVar("freq", 1, database.getNbTransactions());
+            
+            // Define decision variables:
+            // - x[i] is true if item i is in the itemset
+            BoolVar[] itemSelectionVars = model.boolVarArray("x", database.getNbItems());
+            
+            // - freq represents the support count (number of transactions covering the itemset)
+            IntVar supportCountVar = model.intVar("freq", 1, database.getNbTransactions());
 
-            // Post constraints
-            model.arithm(freq, ">=", minSupport).post();
-            ConstraintFactory.generator(database, x).post();
-            ConstraintFactory.coverSize(database, freq, x).post();
+            // Post the minimum support constraint
+            model.arithm(supportCountVar, ">=", minSupportCount).post();
+            
+            // Post the generator constraint: no proper subset has the same support
+            ConstraintFactory.generator(database, itemSelectionVars).post();
+            
+            // Post the coverage constraint to calculate the support of the itemset
+            ConstraintFactory.coverSize(database, supportCountVar, itemSelectionVars).post();
 
+            // Setup the search strategy - start with smaller itemsets
             Solver solver = model.getSolver();
-            solver.setSearch(Search.inputOrderLBSearch(x));
+            solver.setSearch(Search.inputOrderLBSearch(itemSelectionVars));
+            
             List<MiningResult> results = new ArrayList<>();
 
             try {
+                // Find all generator itemsets
                 while (solver.solve()) {
                     checkCancellation(cancellationChecker);
-                    MiningResult result = getMiningResult(database, x, freq);
+                    MiningResult result = getMiningResult(database, itemSelectionVars, supportCountVar);
                     results.add(result);
                 }
             } catch (Exception e) {
                 throw new MiningException("Error during solving process: " + e.getMessage(), e);
             }
 
-            LOGGER.info("Generators mining completed. Found " + results.size() + " results.");
+            LOGGER.info("Generator itemset mining completed. Found " + results.size() + " results.");
 
-            // Empty itemsets are not allowed
+            // Remove empty itemsets as they are not considered valid generators
             filterOutEmptyItemsets(results);
 
             return results;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            LOGGER.info("Generators mining cancelled.");
+            LOGGER.info("Generator itemset mining cancelled.");
             throw new MiningException("Mining cancelled by user.", e);
         } catch (ParameterException | DatabaseException e) {
+            // Re-throw specific exceptions without wrapping
             throw e;
         } catch (Exception e) {
             if (cancellationChecker.getAsBoolean()) {
-                LOGGER.info("Generators mining cancelled during operation.");
+                LOGGER.info("Generator itemset mining cancelled during operation.");
                 throw new MiningException("Mining cancelled by user.", e);
             }
             throw new MiningException("Unexpected error in extractGenerators: " + e.getMessage(), e);
         }
     }
 
+    /**
+     * Extracts minimal rare itemsets from a dataset using a constraint programming approach.
+     * A minimal rare itemset is a rare itemset (support < maxSupport) that has no rare proper subset.
+     * This means all proper subsets of a minimal rare itemset are frequent.
+     *
+     * @param datasetPath The file path to the dataset to be analyzed
+     * @param params A map containing algorithm parameters, must include "maxSupport"
+     * @param cancellationChecker A supplier that returns true if the operation should be cancelled
+     * @return A list of mining results containing the discovered minimal rare itemsets
+     * @throws MiningException If any error occurs during the mining process
+     * @throws ParameterException If required parameters are missing or invalid
+     * @throws DatabaseException If there is an issue with the dataset
+     */
     @Override
     public List<MiningResult> extractMinimal(String datasetPath, Map<String, String> params,
             BooleanSupplier cancellationChecker) throws MiningException {
         try {
+            // Check if operation has been cancelled before starting
             checkCancellation(cancellationChecker);
+            
+            // Validate that all required parameters are present
             validateParams(params, "maxSupport");
 
-            // Read the transactional database
+            // Load the dataset as a transactional database
             TransactionalDatabase database = readTransactionalDatabase(datasetPath);
-            int maxSupport = parseMaxSupport(params, database);
+            
+            // Parse and validate the maximum support threshold
+            int maxSupportCount = parseMaxSupport(params, database);
 
-            if (maxSupport <= 1) {
+            // Ensure maxSupport is meaningful (must allow at least some transactions)
+            if (maxSupportCount <= 1) {
                 throw new ParameterException(
                         "For minimal itemset mining, maxSupport must result in a value greater than 1");
             }
 
-            LOGGER.info("Starting minimal itemset mining with maxSupport: " + maxSupport);
+            LOGGER.info("Starting minimal rare itemset mining with maxSupport: " + maxSupportCount);
 
-            Model model = new Model("Minimal Itemset Mining");
-            BoolVar[] x = model.boolVarArray("x", database.getNbItems());
-            IntVar freq = model.intVar("freq", 1, database.getNbTransactions());
+            // Create a constraint programming model for mining minimal rare itemsets
+            Model model = new Model("Minimal Rare Itemset Mining");
+            
+            // Define decision variables:
+            // - itemVars[i] is true if item i is in the itemset
+            BoolVar[] itemVars = model.boolVarArray("x", database.getNbItems());
+            
+            // - supportVar represents the support count (number of transactions covering the itemset)
+            IntVar supportVar = model.intVar("freq", 1, database.getNbTransactions());
 
-            // Post constraints
-            model.arithm(freq, "<", maxSupport).post();
-            ConstraintFactory.coverSize(database, freq, x).post();
-            ConstraintFactory.frequentSubs(database, maxSupport, x).post();
+            // Post the rare itemset constraint (support < maxSupport)
+            model.arithm(supportVar, "<", maxSupportCount).post();
+            
+            // Post the coverage constraint to calculate the support of the itemset
+            ConstraintFactory.coverSize(database, supportVar, itemVars).post();
+            
+            // Post the minimality constraint: all proper subsets must be frequent
+            // This is the key constraint that defines "minimal" rare itemsets
+            ConstraintFactory.frequentSubs(database, maxSupportCount, itemVars).post();
 
+            // Setup the solver
             Solver solver = model.getSolver();
+            // Note: Default search strategy is used as it works well for this problem
+            
             List<MiningResult> results = new ArrayList<>();
 
             try {
+                // Find all minimal rare itemsets
                 while (solver.solve()) {
                     checkCancellation(cancellationChecker);
-                    MiningResult result = getMiningResult(database, x, freq);
+                    MiningResult result = getMiningResult(database, itemVars, supportVar);
                     results.add(result);
                 }
             } catch (Exception e) {
                 throw new MiningException("Error during solving process: " + e.getMessage(), e);
             }
 
-            LOGGER.info("Minimal itemset mining completed. Found " + results.size() + " results.");
+            LOGGER.info("Minimal rare itemset mining completed. Found " + results.size() + " results.");
 
-            // Empty itemsets are not allowed
+            // Remove empty itemsets as they are not considered valid minimal rare itemsets
             filterOutEmptyItemsets(results);
 
             return results;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            LOGGER.info("Minimal itemset mining cancelled.");
+            LOGGER.info("Minimal rare itemset mining cancelled.");
             throw new MiningException("Mining cancelled by user.", e);
         } catch (ParameterException | DatabaseException e) {
+            // Re-throw specific exceptions without wrapping
             throw e;
         } catch (Exception e) {
             if (cancellationChecker.getAsBoolean()) {
-                LOGGER.info("Minimal itemset mining cancelled during operation.");
+                LOGGER.info("Minimal rare itemset mining cancelled during operation.");
                 throw new MiningException("Mining cancelled by user.", e);
             }
             throw new MiningException("Unexpected error in extractMinimal: " + e.getMessage(), e);
         }
     }
 
+        /**
+     * Extracts closed itemsets of specific sizes from a dataset using a constraint programming approach.
+     * This method finds all closed itemsets whose cardinality is between minSize and maxSize (inclusive)
+     * and that meet the minimum support threshold.
+     *
+     * @param datasetPath The file path to the dataset to be analyzed
+     * @param params A map containing algorithm parameters, must include "minSize", "maxSize", and "minSupport"
+     * @param cancellationChecker A supplier that returns true if the operation should be cancelled
+     * @return A list of mining results containing the discovered closed itemsets within the specified size range
+     * @throws MiningException If any error occurs during the mining process
+     * @throws ParameterException If required parameters are missing or invalid
+     * @throws DatabaseException If there is an issue with the dataset
+     */
     @Override
     public List<MiningResult> extractSizeBetween(String datasetPath, Map<String, String> params,
             BooleanSupplier cancellationChecker) throws MiningException {
         try {
+            // Check if operation has been cancelled before starting
             checkCancellation(cancellationChecker);
+            
+            // Validate that all required parameters are present
             validateParams(params, "minSize", "maxSize", "minSupport");
 
-            // Read the transactional database
+            // Load the dataset as a transactional database
             TransactionalDatabase database = readTransactionalDatabase(datasetPath);
-            int minSupport = parseMinSupport(params, database);
+            int minSupportCount = parseMinSupport(params, database);
 
-            int minSize, maxSize;
+            // Parse size constraints
+            int minItemsetSize, maxItemsetSize;
             try {
-                minSize = Integer.parseInt(params.get("minSize"));
-                maxSize = Integer.parseInt(params.get("maxSize"));
+                minItemsetSize = Integer.parseInt(params.get("minSize"));
+                maxItemsetSize = Integer.parseInt(params.get("maxSize"));
             } catch (NumberFormatException e) {
                 throw new ParameterException("Invalid minSize or maxSize parameters: " + e.getMessage());
             }
 
-            if (minSize < 1) {
+            // Validate size constraints
+            if (minItemsetSize < 1) {
                 throw new ParameterException("minSize must be at least 1");
             }
 
-            if (maxSize < minSize) {
+            if (maxItemsetSize < minItemsetSize) {
                 throw new ParameterException("maxSize must be greater than or equal to minSize");
             }
 
-            if (maxSize > database.getNbItems()) {
+            // Ensure maxSize doesn't exceed the number of items in the database
+            if (maxItemsetSize > database.getNbItems()) {
                 LOGGER.warning("maxSize is greater than the number of items in the database. " +
                         "Setting maxSize to the number of items: " + database.getNbItems());
-                maxSize = database.getNbItems();
+                maxItemsetSize = database.getNbItems();
             }
 
-            LOGGER.info("Starting size between itemset mining with minSize: " + minSize + ", maxSize: " + maxSize +
-                    ", minSupport: " + minSupport);
+            LOGGER.info("Starting size-constrained closed itemset mining with minSize: " + minItemsetSize + 
+                    ", maxSize: " + maxItemsetSize + ", minSupport: " + minSupportCount);
 
+            // Create a constraint programming model
             Model model = new Model("Size Between Itemset Mining");
-            BoolVar[] x = model.boolVarArray("x", database.getNbItems());
-            IntVar freq = model.intVar("freq", 1, database.getNbTransactions());
+            
+            // Define decision variables:
+            // - itemVars[i] is true if item i is in the itemset
+            BoolVar[] itemVars = model.boolVarArray("x", database.getNbItems());
+            
+            // - supportVar represents the support count (number of transactions covering the itemset)
+            IntVar supportVar = model.intVar("freq", 1, database.getNbTransactions());
 
-            // Limiting the size of the itemsets
-            model.sum(x, ">=", minSize).post();
-            model.sum(x, "<=", maxSize).post();
-            model.arithm(freq, ">=", minSupport).post();
+            // Post size constraints
+            model.sum(itemVars, ">=", minItemsetSize).post();  // Enforce minimum size
+            model.sum(itemVars, "<=", maxItemsetSize).post();  // Enforce maximum size
+            
+            // Post minimum support constraint
+            model.arithm(supportVar, ">=", minSupportCount).post();
 
-            // Adding the constraints for closed itemsets
-            ConstraintFactory.coverSize(database, freq, x).post();
-            ConstraintFactory.coverClosure(database, x).post();
+            // Post constraints to find closed itemsets
+            // 1. Coverage constraint: compute the support of the itemset
+            ConstraintFactory.coverSize(database, supportVar, itemVars).post();
+            
+            // 2. Closure constraint: ensure the itemset is closed
+            // (i.e., there's no proper superset with the same support)
+            ConstraintFactory.coverClosure(database, itemVars).post();
 
+            // Setup the solver with an appropriate search strategy
             Solver solver = model.getSolver();
-            solver.setSearch(Search.minDomLBSearch(x));
+            
+            // Use minDomLBSearch which selects the variable with the smallest domain
+            // and assigns it to its lower bound first - good for finding itemsets efficiently
+            solver.setSearch(Search.minDomLBSearch(itemVars));
+            
             List<MiningResult> results = new ArrayList<>();
 
             try {
+                // Find all closed itemsets within the size constraints
                 while (solver.solve()) {
                     checkCancellation(cancellationChecker);
-                    MiningResult result = getMiningResult(database, x, freq);
+                    MiningResult result = getMiningResult(database, itemVars, supportVar);
                     results.add(result);
                 }
             } catch (Exception e) {
                 throw new MiningException("Error during solving process: " + e.getMessage(), e);
             }
 
-            LOGGER.info("Size between itemset mining completed. Found " + results.size() + " results.");
+            LOGGER.info("Size-constrained closed itemset mining completed. Found " + results.size() + " results.");
 
-            // Empty itemsets are not allowed
+            // Remove any empty itemsets that might have been generated
             filterOutEmptyItemsets(results);
 
             return results;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            LOGGER.info("SizeBetween itemset mining cancelled.");
+            LOGGER.info("Size-constrained itemset mining cancelled.");
             throw new MiningException("Mining cancelled by user.", e);
         } catch (ParameterException | DatabaseException e) {
+            // Re-throw specific exceptions without wrapping
             throw e;
         } catch (Exception e) {
             if (cancellationChecker.getAsBoolean()) {
-                LOGGER.info("SizeBetween itemset mining cancelled during operation.");
+                LOGGER.info("Size-constrained itemset mining cancelled during operation.");
                 throw new MiningException("Mining cancelled by user.", e);
             }
             throw new MiningException("Unexpected error in extractSizeBetween: " + e.getMessage(), e);
         }
     }
 
+
+        /**
+     * Extracts closed itemsets that contain specific items using a constraint programming approach.
+     * This method finds all closed itemsets that include the items specified in the "items" parameter
+     * and meet the minimum support threshold.
+     *
+     * @param datasetPath The file path to the dataset to be analyzed
+     * @param params A map containing algorithm parameters, must include "items" and "minSupport"
+     *               The "items" parameter should be a comma-separated list of item indices that must be present
+     * @param cancellationChecker A supplier that returns true if the operation should be cancelled
+     * @return A list of mining results containing the discovered closed itemsets that include the specified items
+     * @throws MiningException If any error occurs during the mining process
+     * @throws ParameterException If required parameters are missing or invalid
+     * @throws DatabaseException If there is an issue with the dataset
+     */
     @Override
     public List<MiningResult> extractPresence(String datasetPath, Map<String, String> params,
             BooleanSupplier cancellationChecker) throws MiningException {
         try {
+            // Check if operation has been cancelled before starting
             checkCancellation(cancellationChecker);
+            
+            // Validate that all required parameters are present
             validateParams(params, "items", "minSupport");
 
-            // Read the transactional database
+            // Load the dataset as a transactional database
             TransactionalDatabase database = readTransactionalDatabase(datasetPath);
-            int minSupport = parseMinSupport(params, database);
+            int minSupportCount = parseMinSupport(params, database);
 
-            int[] presence = parseArrayParameter(params.get("items"), database.getNbItems());
+            // Parse the list of items that must be present in the discovered patterns
+            int[] requiredItems = parseArrayParameter(params.get("items"), database.getNbItems());
 
-            LOGGER.info("Starting closed itemset mining with presence constraints and minSupport: " + minSupport);
+            LOGGER.info("Starting closed itemset mining with item presence constraints and minSupport: " + minSupportCount);
 
-            Model model = new Model("Closed Itemset Mining with Presence");
-            BoolVar[] x = model.boolVarArray("x", database.getNbItems());
-            IntVar freq = model.intVar("freq", 1, database.getNbTransactions());
+            // Create a constraint programming model
+            Model model = new Model("Closed Itemset Mining with Presence Constraints");
+            
+            // Define decision variables:
+            // - itemVars[i] is true if item i is in the itemset
+            BoolVar[] itemVars = model.boolVarArray("x", database.getNbItems());
+            
+            // - supportVar represents the support count (number of transactions covering the itemset)
+            IntVar supportVar = model.intVar("freq", 1, database.getNbTransactions());
 
-            // Constraining the presence of items
-            for (int i = 0; i < presence.length; i++) {
-                if (presence[i] == 1) {
-                    x[i].eq(1).post();
+            // Post item presence constraints
+            // For each required item (marked with 1 in the presence array), force it to be in the pattern
+            for (int i = 0; i < requiredItems.length; i++) {
+                if (requiredItems[i] == 1) {
+                    // Force this item to be included in all solutions
+                    itemVars[i].eq(1).post();
                 }
             }
 
-            // Adding the constraints for closed itemsets
-            model.arithm(freq, ">=", minSupport).post();
-            ConstraintFactory.coverSize(database, freq, x).post();
-            ConstraintFactory.coverClosure(database, x).post();
+            // Post minimum support constraint
+            model.arithm(supportVar, ">=", minSupportCount).post();
+            
+            // Post constraints to find closed itemsets
+            // 1. Coverage constraint: compute the support of the itemset
+            ConstraintFactory.coverSize(database, supportVar, itemVars).post();
+            
+            // 2. Closure constraint: ensure the itemset is closed
+            // (i.e., there's no proper superset with the same support)
+            ConstraintFactory.coverClosure(database, itemVars).post();
 
+            // Setup the solver
             Solver solver = model.getSolver();
             List<MiningResult> results = new ArrayList<>();
 
             try {
+                // Find all closed itemsets that satisfy the presence constraints
                 while (solver.solve()) {
                     checkCancellation(cancellationChecker);
-                    MiningResult result = getMiningResult(database, x, freq);
+                    MiningResult result = getMiningResult(database, itemVars, supportVar);
                     results.add(result);
                 }
             } catch (Exception e) {
                 throw new MiningException("Error during solving process: " + e.getMessage(), e);
             }
 
-            LOGGER.info("Presence constrained mining completed. Found " + results.size() + " results.");
+            LOGGER.info("Presence-constrained closed itemset mining completed. Found " + results.size() + " results.");
 
-            // Empty itemsets are not allowed
+            // Remove any empty itemsets that might have been generated
             filterOutEmptyItemsets(results);
 
             return results;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            LOGGER.info("Presence constrained mining cancelled.");
+            LOGGER.info("Presence-constrained mining cancelled.");
             throw new MiningException("Mining cancelled by user.", e);
         } catch (ParameterException | DatabaseException e) {
+            // Re-throw specific exceptions without wrapping
             throw e;
         } catch (Exception e) {
             if (cancellationChecker.getAsBoolean()) {
-                LOGGER.info("Presence constrained mining cancelled during operation.");
+                LOGGER.info("Presence-constrained mining cancelled during operation.");
                 throw new MiningException("Mining cancelled by user.", e);
             }
             throw new MiningException("Unexpected error in extractPresence: " + e.getMessage(), e);
         }
     }
 
+
+        /**
+     * Extracts closed itemsets that specifically exclude certain items using a constraint programming approach.
+     * This method finds all closed itemsets that do NOT include the items specified in the "items" parameter
+     * and meet the minimum support threshold.
+     *
+     * @param datasetPath The file path to the dataset to be analyzed
+     * @param params A map containing algorithm parameters, must include "items" and "minSupport"
+     *               The "items" parameter should be a comma-separated list of item indices that must be absent
+     * @param cancellationChecker A supplier that returns true if the operation should be cancelled
+     * @return A list of mining results containing the discovered closed itemsets that exclude the specified items
+     * @throws MiningException If any error occurs during the mining process
+     * @throws ParameterException If required parameters are missing or invalid
+     * @throws DatabaseException If there is an issue with the dataset
+     */
     @Override
     public List<MiningResult> extractAbsence(String datasetPath, Map<String, String> params,
             BooleanSupplier cancellationChecker) throws MiningException {
         try {
+            // Check if operation has been cancelled before starting
             checkCancellation(cancellationChecker);
+            
+            // Validate that all required parameters are present
             validateParams(params, "items", "minSupport");
 
-            // Read the transactional database
+            // Load the dataset as a transactional database
             TransactionalDatabase database = readTransactionalDatabase(datasetPath);
-            int minSupport = parseMinSupport(params, database);
+            int minSupportCount = parseMinSupport(params, database);
 
-            int[] absence = parseArrayParameter(params.get("items"), database.getNbItems());
+            // Parse the list of items that must be absent from the discovered patterns
+            int[] forbiddenItems = parseArrayParameter(params.get("items"), database.getNbItems());
 
-            LOGGER.info("Starting closed itemset mining with absence constraints and minSupport: " + minSupport);
+            LOGGER.info("Starting closed itemset mining with item absence constraints and minSupport: " + minSupportCount);
 
-            Model model = new Model("Closed Itemset Mining with Absence");
-            BoolVar[] x = model.boolVarArray("x", database.getNbItems());
-            IntVar freq = model.intVar("freq", 1, database.getNbTransactions());
+            // Create a constraint programming model
+            Model model = new Model("Closed Itemset Mining with Absence Constraints");
+            
+            // Define decision variables:
+            // - itemVars[i] is true if item i is in the itemset
+            BoolVar[] itemVars = model.boolVarArray("x", database.getNbItems());
+            
+            // - supportVar represents the support count (number of transactions covering the itemset)
+            IntVar supportVar = model.intVar("freq", 1, database.getNbTransactions());
 
-            // Constraining the absence of items
-            for (int i = 0; i < absence.length; i++) {
-                if (absence[i] == 1) {
-                    x[i].eq(0).post();
+            // Post item absence constraints
+            // For each forbidden item (marked with 1 in the absence array), force it NOT to be in the pattern
+            for (int i = 0; i < forbiddenItems.length; i++) {
+                if (forbiddenItems[i] == 1) {
+                    // Force this item to be excluded in all solutions
+                    itemVars[i].eq(0).post();
                 }
             }
 
-            // Adding the constraints for closed itemsets
-            model.arithm(freq, ">=", minSupport).post();
-            ConstraintFactory.coverSize(database, freq, x).post();
-            ConstraintFactory.coverClosure(database, x).post();
+            // Post minimum support constraint
+            model.arithm(supportVar, ">=", minSupportCount).post();
+            
+            // Post constraints to find closed itemsets
+            // 1. Coverage constraint: compute the support of the itemset
+            ConstraintFactory.coverSize(database, supportVar, itemVars).post();
+            
+            // 2. Closure constraint: ensure the itemset is closed
+            // (i.e., there's no proper superset with the same support)
+            ConstraintFactory.coverClosure(database, itemVars).post();
 
+            // Setup the solver with a specific search strategy
             Solver solver = model.getSolver();
-            solver.setSearch(Search.inputOrderLBSearch(x));
+            
+            // Use input order strategy which processes variables in their natural order
+            solver.setSearch(Search.inputOrderLBSearch(itemVars));
+            
             List<MiningResult> results = new ArrayList<>();
 
             try {
+                // Find all closed itemsets that satisfy the absence constraints
                 while (solver.solve()) {
                     checkCancellation(cancellationChecker);
-                    MiningResult result = getMiningResult(database, x, freq);
+                    MiningResult result = getMiningResult(database, itemVars, supportVar);
                     results.add(result);
                 }
             } catch (Exception e) {
                 throw new MiningException("Error during solving process: " + e.getMessage(), e);
             }
 
-            LOGGER.info("Absence constrained mining completed. Found " + results.size() + " results.");
+            LOGGER.info("Absence-constrained closed itemset mining completed. Found " + results.size() + " results.");
 
-            // Empty itemsets are not allowed
+            // Remove any empty itemsets that might have been generated
             filterOutEmptyItemsets(results);
 
             return results;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            LOGGER.info("Absence constrained mining cancelled.");
+            LOGGER.info("Absence-constrained mining cancelled.");
             throw new MiningException("Mining cancelled by user.", e);
         } catch (ParameterException | DatabaseException e) {
+            // Re-throw specific exceptions without wrapping
             throw e;
         } catch (Exception e) {
             if (cancellationChecker.getAsBoolean()) {
-                LOGGER.info("Absence constrained mining cancelled during operation.");
+                LOGGER.info("Absence-constrained mining cancelled during operation.");
                 throw new MiningException("Mining cancelled by user.", e);
             }
             throw new MiningException("Unexpected error in extractAbsence: " + e.getMessage(), e);
         }
     }
+
 
     /**
      * Reads the transactional database from the given path.
