@@ -153,3 +153,13 @@ The docs will be available at http://localhost:8000.
 
 - `make test` — Run Java unit tests
 - `make clean` — Clean Java build artifacts
+
+## Contributors
+
+| First Name | Last Name  | GitHub ID       |
+| ---------- | ---------- | --------------- |
+| Jewin      | CHENG      | @jewinc         |
+| Tiphaine   | GAYET      | @tiphaine-gayet |
+| Aleksandra | KOVIAZINA  | @KoviazinaA     |
+| Mathusan   | SELVAKUMAR | @mathusanm6     |
+
